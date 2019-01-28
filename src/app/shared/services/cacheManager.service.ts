@@ -41,41 +41,41 @@ export class CacheManagerService {
   */
   async intialaize(playerID: number): Promise<Result> {
     try {
-
+      let result = Result.Failed;
       this.mainLCD = await this.getComponent(playerID);
+
       if (!this.mainLCD) {
-        return Result.Failed;
-      }
-      this.branchID = this.mainLCD.queueBranch_ID;
+        this.branchID = this.mainLCD.queueBranch_ID;
+        this.counters = await this.getCounters();
 
-      this.counters = await this.getCounters();
-      if (!this.counters || this.counters.length <= 0) {
-        return Result.Failed;
-      }
-      this.services = await this.getServices();
-      if (!this.services || this.services.length <= 0) {
-        return Result.Failed;
-      }
-      this.segments = await this.getSegments();
-      if (!this.segments || this.segments.length <= 0) {
-        return Result.Failed;
-      }
-      this.halls = await this.getHalls();
-      if (!this.halls || this.halls.length <= 0) {
-        return Result.Failed;
-      }
-      this.users = await this.getUsers();
-      if (!this.users || this.users.length <= 0) {
-        return Result.Failed;
-      }
-      this.countersInfo = await this.getCountersData();
-      if (!this.countersInfo || this.countersInfo.length <= 0) {
-        return Result.Failed;
+        if (this.counters && this.counters.length > 0) {
+
+          this.services = await this.getServices();
+
+          if (this.services && this.services.length > 0) {
+            this.segments = await this.getSegments();
+
+            if (this.segments && this.segments.length > 0) {
+              this.halls = await this.getHalls();
+
+              if (this.halls && this.halls.length > 0) {
+                this.users = await this.getUsers();
+
+                if (this.users && this.users.length > 0) {
+                  this.countersInfo = await this.getCountersData();
+
+                  if (!this.countersInfo || this.countersInfo.length <= 0) {
+                    this.fillCache();
+                    result = Result.Success;
+                  }
+                }
+              }
+            }
+          }
+        }
       }
 
-      this.fillCache();
-
-      return Result.Success;
+      return result;
     } catch (error) {
       this.logger.error(error);
       return Result.Failed;
