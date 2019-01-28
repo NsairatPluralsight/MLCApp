@@ -126,13 +126,13 @@ export class LCDInfoService {
 
   /**
   * @summary updates the cache counters info and the LCDInfo object
-  * @param {Message} result - the Message object which sent by the server update event
+  * @param {Message} message - the Message object which sent by the server update event
   */
-  async update(result: Message): Promise<void> {
+  async update(message: Message): Promise<void> {
     try {
-      if (result.payload) {
-        if (result.payload.countersInfo && result.payload.countersInfo.length > 0) {
-          let countersInfo = result.payload.countersInfo;
+      let result = await this.checkCounters(message);
+      if (result == Result.Success) {
+          let countersInfo = message.payload.countersInfo;
           let counters = this.prepareCounterData(countersInfo);
           let cache = this.cacheService.getCache();
 
@@ -149,7 +149,6 @@ export class LCDInfoService {
             this.setLastUpdateTime();
           }
         }
-      }
     } catch (error) {
       this.logger.error(error);
     }
@@ -436,8 +435,7 @@ export class LCDInfoService {
 
         if (window['lastUpdateTime']) {
           updateTime = window['lastUpdateTime'];
-          let now = new Date();
-          timeDifference = now.getTime() - updateTime.getTime();
+          timeDifference = new Date().getTime() - updateTime.getTime();
         }
 
         let tmpTimeDiffResult = updateTime.getTime() - lastCallTime.getTime();
@@ -448,8 +446,8 @@ export class LCDInfoService {
           blinkingCounts = window['blinkingCounts'];
           blinkingInterval = window['blinkingInterval'];
         }
-
-        if (tmpDiffSeconds < blinkingCounts * blinkingInterval) {
+        let TotalBlinkingTime = blinkingCounts * blinkingInterval
+        if (tmpDiffSeconds < TotalBlinkingTime) {
           isBlinking = true;
         }
       }
@@ -541,6 +539,27 @@ export class LCDInfoService {
     } catch (error) {
       this.logger.error(error);
       return Result.Failed;
+    }
+  }
+
+  /**
+  * @async
+  * @summary check if this message contains counters or not
+  * @param {Message} message - the message received
+  * @returns {Promise<Result>} Result enum wrapped in a promise.
+  */
+  async checkCounters(message: Message): Promise<Result> {
+    try {
+      let result = Result.Failed;
+      if (message.payload) {
+        if (message.payload.countersInfo && message.payload.countersInfo.length > 0) {
+          result = Result.Success;
+        }
+      }
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+      return Result.Failed
     }
   }
 }
