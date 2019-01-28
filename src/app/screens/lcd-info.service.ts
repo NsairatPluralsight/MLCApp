@@ -77,7 +77,7 @@ export class LCDInfoService {
 
         this.filterCounters();
 
-        result = this.updateLCDResult();
+        result = await this.updateLCDResult();
 
         if (result === Result.Success) {
 
@@ -87,15 +87,10 @@ export class LCDInfoService {
             this.setLastUpdateTime();
             this.refreshCache();
             return Result.Success;
-          } else {
-            return Result.Failed;
           }
-        } else {
-          return Result.Failed;
         }
-      } else {
-        return Result.Failed;
       }
+      return result;
     } catch (error) {
       this.logger.error(error);
       return Result.Failed;
@@ -103,13 +98,14 @@ export class LCDInfoService {
   }
 
   /**
+  * @async
   * @summary sets the lcdData array which is used by the UI
-  * @returns {Result} Result enum;
+  * @returns {Promise<Result>} Result enum wrapped in a promise.
   */
-  updateLCDResult(): Result {
+  async updateLCDResult(): Promise<Result> {
     try {
       let cache = this.cacheService.getCache();
-      this.lcdData = this.getLCDData(cache);
+      this.lcdData = await this.getLCDData(cache);
 
       if (this.lcdData) {
         if (cache.mainLCD.configuration.enablePaging) {
@@ -119,9 +115,9 @@ export class LCDInfoService {
           this.pageData = this.lcdData;
         }
         return Result.Success;
-      } else {
-        return Result.Failed;
       }
+
+      return Result.Failed;
     } catch (error) {
       this.logger.error(error);
       return Result.Failed;
@@ -132,7 +128,7 @@ export class LCDInfoService {
   * @summary updates the cache counters info and the LCDInfo object
   * @param {Message} result - the Message object which sent by the server update event
   */
-  update(result: Message): void {
+  async update(result: Message): Promise<void> {
     try {
       if (result.payload) {
         if (result.payload.countersInfo && result.payload.countersInfo.length > 0) {
@@ -147,7 +143,7 @@ export class LCDInfoService {
           cache.countersInfo = this.updateCounters(counters, cache.countersInfo);
           this.cacheService.setCache(cache);
 
-          let updateResult = this.updateLCDResult();
+          let updateResult = await this.updateLCDResult();
 
           if (updateResult === Result.Success) {
             this.setLastUpdateTime();
@@ -160,37 +156,37 @@ export class LCDInfoService {
   }
 
   /**
+  * @async
   * @summary updates the cache configuration info and the LCDInfo object
-  * @param {Message} result - the Message object which sent by the Component Service update event
+  * @param {Message} message - the Message object which sent by the Component Service update event
   */
-  updateConfig(result: Message): void {
+  async updateConfig(message: Message): Promise<void> {
     try {
       let cache = this.cacheService.getCache();
-      if (result.payload && result.payload.componentID == cache.mainLCD.id) {
-        if (result.payload.data) {
-          let mainLCDConfig = <MainLCDConfiguration>JSON.parse(result.payload.data);
+      let isValidMessage = await this.checkMessage(message, cache.mainLCD.id);
+      if (isValidMessage == Result.Success) {
+        let mainLCDConfig = <MainLCDConfiguration>JSON.parse(message.payload.data);
 
-            let isThereNewCounter = false;
+        let isThereNewCounter = false;
 
-            mainLCDConfig.counters.forEach(element => {
-              if (cache.mainLCD.configuration.counters.findIndex(e => e.id === element.id) == -1) {
-                isThereNewCounter = true;
-              }
-            });
+        mainLCDConfig.counters.forEach(element => {
+          if (cache.mainLCD.configuration.counters.findIndex(e => e.id === element.id) == -1) {
+            isThereNewCounter = true;
+          }
+        });
 
-            if (isThereNewCounter) {
-              this.fetchCache();
-            } else {
-              cache.mainLCD.configuration = mainLCDConfig;
-              this.cacheService.setCache(cache);
-              this.filterCounters();
+        if (isThereNewCounter) {
+          this.fetchCache();
+        } else {
+          cache.mainLCD.configuration = mainLCDConfig;
+          this.cacheService.setCache(cache);
+          this.filterCounters();
 
-              let updateResult = this.updateLCDResult();
+          let updateResult = await this.updateLCDResult();
 
-              if (updateResult === Result.Success) {
-                this.setLastUpdateTime();
-              }
-            }
+          if (updateResult === Result.Success) {
+            this.setLastUpdateTime();
+          }
         }
       }
     } catch (error) {
@@ -199,9 +195,8 @@ export class LCDInfoService {
   }
 
   /**
-  * Updates the cache from server
-  * if failed emits the status update event
   * @async
+  * @summary Updates the cache from server if failed emits the status update event
   */
   async fetchCache(): Promise<void> {
     try {
@@ -221,7 +216,7 @@ export class LCDInfoService {
   * @param {LCDCache} cache - the cache object which is cached by the app
   * @returns {LCDInfo[]} returns an array which contains the LCDInfo objects for the UI
   */
-  getLCDData(cache: LCDCache): LCDInfo[] {
+  async getLCDData(cache: LCDCache): Promise<LCDInfo[]> {
     try {
       let lcdInfo = new Array<LCDInfo>();
       for (let counter of cache.countersInfo) {
@@ -290,7 +285,7 @@ export class LCDInfoService {
           lcdCounter.LastCallTime = counter.lastCallTime;
           lcdCounter.Type = counter.activityType;
           lcdCounter.TicketNumber = counter.displayTicketNumber;
-          lcdCounter.IsBlinking = this.isBlinking(new Date(counter.lastCallTime));
+          lcdCounter.IsBlinking = await this.isBlinking(new Date(counter.lastCallTime));
           lcdInfo.push(lcdCounter);
         }
       }
@@ -338,7 +333,6 @@ export class LCDInfoService {
   */
   updateCounters(newCountersList: CounterInfo[], currentCounters: CounterInfo[]): CounterInfo[] {
     try {
-
       if (!currentCounters) {
         currentCounters = new Array<CounterInfo>();
       }
@@ -372,18 +366,20 @@ export class LCDInfoService {
       if (mainLCDConfig.countersOption == CountersOption.Custom) {
 
         cache.counters = cache.counters.filter(element => {
-          if(mainLCDConfig.counters.findIndex(e => e.id === element.id) > -1) {
+          if (mainLCDConfig.counters.findIndex(e => e.id === element.id) > -1) {
             return element;
-          }})
+          }
+        })
           .map(element => {
             element.direction = mainLCDConfig.counters.find(c => c.id === element.id).direction
             return element;
           });
 
         cache.countersInfo = cache.countersInfo.filter(element => {
-          if(mainLCDConfig.counters.findIndex(e => e.id === element.counterID) > -1) {
+          if (mainLCDConfig.counters.findIndex(e => e.id === element.counterID) > -1) {
             return element;
-          }});
+          }
+        });
 
         this.cacheService.setCache(cache);
       }
@@ -401,14 +397,14 @@ export class LCDInfoService {
       let pageSize = 10;
       this.pagesNumber = Math.ceil(this.lcdData.length / pageSize);
 
-      if(this.currentPage > this.pagesNumber) {
-        this.currentPage= 1;
+      if (this.currentPage > this.pagesNumber) {
+        this.currentPage = 1;
       }
 
       let startIndex = (this.currentPage - 1) * pageSize;
       let endIndex = Math.min(startIndex + pageSize - 1, this.lcdData.length - 1);
 
-      this.pageData = this.lcdData.slice(startIndex , endIndex + 1);
+      this.pageData = this.lcdData.slice(startIndex, endIndex + 1);
       this.currentPage++;
 
       let cache = this.cacheService.getCache();
@@ -426,9 +422,9 @@ export class LCDInfoService {
 
   /**
   * @param {Date} lastCallTime - the date time of the last call has been made on a counter
-  * @returns {boolean} returns whether the counter should be Blinking or not in the UI
+  * @returns {Promise<boolean>} returns whether the counter should be Blinking or not in the UI wrapped in a promise.
   */
-  isBlinking(lastCallTime: Date): boolean {
+  async isBlinking(lastCallTime: Date): Promise<boolean> {
     try {
       let isBlinking = false;
 
@@ -467,7 +463,7 @@ export class LCDInfoService {
   /**
   * Sets the last update time which is needed in isBlinking method
   */
-  setLastUpdateTime(): void {
+  async setLastUpdateTime(): Promise<void> {
     try {
       if (window['lastUpdateTime']) {
         window['lastUpdateTime'] = new Date();
@@ -523,6 +519,28 @@ export class LCDInfoService {
     } catch (error) {
       this.logger.error(error);
       return '';
+    }
+  }
+
+  /**
+  * @async
+  * @summary check if this message belongs to this component or not
+  * @param {Message} message - the message received by the update event
+  * @param {number} id - the mainLCd component ID
+  * @returns {Promise<Result>} Result enum wrapped in a promise.
+  */
+  async checkMessage(message: Message, id: number): Promise<Result> {
+    try {
+      let result = Result.Failed;
+      if (message.payload && message.payload.componentID == id) {
+        if (message.payload.data) {
+          result = Result.Success;
+        }
+      }
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+      return Result.Failed;
     }
   }
 }

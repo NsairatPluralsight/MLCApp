@@ -163,9 +163,9 @@ describe('LcdInfoService', () => {
   });
 
   describe('getLCDData', () => {
-    it('should create LcdInfo Array', () => {
+    it('should create LcdInfo Array', async () => {
 
-      let LCDArray = service.getLCDData(cache);
+      let LCDArray = await service.getLCDData(cache);
 
       expect(LCDArray).not.toBeNull();
       expect(LCDArray.length).toBe(1);
@@ -173,9 +173,9 @@ describe('LcdInfoService', () => {
   });
 
   describe('updateLCDResult', () => {
-    it('should set lcdData by calling the getLCDData', () => {
+    it('should set lcdData by calling the getLCDData', async () => {
       let spy = spyOn(service, 'getLCDData').and.callThrough();
-      let result = service.updateLCDResult();
+      let result = await service.updateLCDResult();
 
       expect(result).toBe(Result.Success);
       expect(spy).toHaveBeenCalledTimes(1);
@@ -352,11 +352,11 @@ describe('LcdInfoService', () => {
   });
 
   describe('isBlinking', () => {
-    it('should be true', () => {
+    it('should be true', async () => {
       window['blinkingCounts'] = 5;
       window['blinkingInterval'] = 2;
 
-      let result = service.isBlinking(new Date());
+      let result = await service.isBlinking(new Date());
 
       expect(result).toBe(true);
     });
@@ -380,10 +380,10 @@ describe('LcdInfoService', () => {
   });
 
   describe('setLastUpdateTime', () => {
-    it('should set last update time', () => {
+    it('should set last update time', async () => {
       let spy = spyOn(service, 'setLastUpdateTime');
 
-      service.setLastUpdateTime();
+      await service.setLastUpdateTime();
 
       expect(spy).toHaveBeenCalledTimes(1);
     });
