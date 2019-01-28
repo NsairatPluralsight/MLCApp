@@ -7,6 +7,7 @@ import { StateService } from './services/state.service';
 import { NgIncludeDirective } from './directives/ng-include.directive';
 import { CommunicationService } from './services/communication.service';
 import { EventsService } from './services/events.service';
+import { HelperService } from './services/helper.service';
 
 @NgModule({
   imports: [
@@ -19,7 +20,8 @@ import { EventsService } from './services/events.service';
     CacheManagerService,
     StateService,
     CommunicationService,
-    EventsService
+    EventsService,
+    HelperService
   ],
   exports: [NgIncludeDirective]
 })

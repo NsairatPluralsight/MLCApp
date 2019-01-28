@@ -41,7 +41,7 @@ export class LCDListComponent implements OnInit {
       await this.route.queryParams.subscribe(async params => {
         if (params && (params.id || params.ID)) {
           let playerID =  params.id ? params.id : params.ID;
-          let result = await this.lcdService.start(playerID);
+          let result = await this.lcdService.start(parseInt(playerID));
         }
       });
     } catch (error) {

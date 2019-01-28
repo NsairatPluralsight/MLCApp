@@ -63,17 +63,16 @@ async setLastUpdateTime(): Promise<void> {
 
 /**
 * Gets the LCD columns the the customer want to display
-* @return {Result} Result enum.
+* @return {any}
 */
-setLCDDesign(): Result {
+getLCDDesign() {
   try {
+    let result = Result.Failed;
     if (window['LCDElement']) {
       this.lcdDesign = window['LCDElement'];
-
-      return Result.Success;
-    } else {
-      return Result.Failed;
+      result = Result.Success;
     }
+    return result;
   } catch (error) {
     this.logger.error(error);
     return Result.Failed;

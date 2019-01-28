@@ -24,6 +24,7 @@ export class LCDInfoService {
   branchID: number;
   pagesNumber: number;
   currentPage: number;
+  lcdDesign: any[];
 
   /**
   * listen to the events
@@ -85,9 +86,10 @@ export class LCDInfoService {
 
         if (result === Result.Success) {
 
-          result = this.helperService.setLCDDesign();
+          result = this.helperService.getLCDDesign();
 
           if (result === Result.Success) {
+            this.lcdDesign =  this.helperService.lcdDesign;
             this.helperService.setLastUpdateTime();
             this.refreshCache();
             return Result.Success;

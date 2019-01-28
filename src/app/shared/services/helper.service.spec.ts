@@ -35,7 +35,7 @@ describe('HelperService', () => {
         { ID: 'HallNameL1', Caption: 'HallL1 EN' },
       ];
 
-      let result = service.setLCDDesign();
+      let result = service.getLCDDesign();
 
       expect(result).toBe(Result.Success);
       expect(service.lcdDesign).toBeDefined();

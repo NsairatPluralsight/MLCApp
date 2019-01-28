@@ -106,7 +106,7 @@ export class CacheManagerService {
   * @summary get MainLCD from Component service
   * @return {Promise<CSComponent[]>} CSComponent Object wrapped in a promise.
   */
-  async getComponent(playerID): Promise<CSComponent> {
+  async getComponent(playerID: number): Promise<CSComponent> {
     try {
       let requestpayload = new RequestPayload();
       requestpayload.orgid = 1;
