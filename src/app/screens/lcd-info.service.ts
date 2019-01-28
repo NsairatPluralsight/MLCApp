@@ -502,15 +502,15 @@ export class LCDInfoService {
   }
 
   /**
-  * @param {Message} result - the command message received by the event
+  * @param {Message} message - the command message received by the event
   * @returns {string} returns the command text that received in message or empty string
   */
-  getCommandText(result: Message): string {
+  getCommandText(message: Message): string {
     try {
       let text = '';
-      if (result.payload) {
-        if (result.payload.data) {
-          text = result.payload.data;
+      if (message.payload) {
+        if (message.payload.data) {
+          text = message.payload.data;
         }
       }
       return text;

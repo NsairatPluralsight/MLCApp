@@ -115,15 +115,16 @@ export class CacheManagerService {
 
       let mainLCD = new CSComponent();
 
-      await this.communicationService.post(requestpayload, 'ComponentService/Manager/GetComponent').then((data: Message) => {
-        if (data && data.payload) {
+      await this.communicationService.post(requestpayload, 'ComponentService/Manager/GetComponent').then(async (data: Message) => {
+        let result = await this.isValidPayload(data);
+        if (result == Result.Success) {
           let responsePayload = <ResponsePayload>data.payload;
 
           if (responsePayload.result == Result.Success) {
             let mainLCDcomponent = (JSON.parse(responsePayload.data)[0]);
             mainLCD = mainLCDcomponent;
             mainLCD.configuration = <MainLCDConfiguration>(JSON.parse(mainLCDcomponent['configuration']));
-          } else{
+          } else {
             mainLCD = null;
           }
         } else {
@@ -147,21 +148,17 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('counter');
       let counters = Array<Counter>();
 
-      await this.communicationService.post(payload, 'ExternalData/read').then(
-        async (data: Message) => {
-          if (data) {
-            if (data.payload) {
-              let countersPayload = data.payload;
-              counters = countersPayload.counters.map((c) => {
-                return (new Counter(c['ID'], c['Name_L1'], c['Name_L2'], c['Name_L3'], c['Name_L4'], c['Number']));
-              });
-            } else {
-              return null;
-            }
-          } else {
-            return null;
-          }
-        });
+      await this.communicationService.post(payload, 'ExternalData/read').then(async (data: Message) => {
+        let result = await this.isValidPayload(data);
+        if (result == Result.Success) {
+          let countersPayload = data.payload;
+          counters = countersPayload.counters.map((c) => {
+            return (new Counter(c['ID'], c['Name_L1'], c['Name_L2'], c['Name_L3'], c['Name_L4'], c['Number']));
+          });
+        } else {
+          return null;
+        }
+      });
       return counters;
     } catch (error) {
       this.logger.error(error);
@@ -179,16 +176,13 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('service');
       let services = new Array<Service>();
 
-      await (this.communicationService.post(payload, 'ExternalData/read')).then((data: Message) => {
-        if (data) {
-          if (data.payload) {
-            let servicesPayload = data.payload;
-            services = servicesPayload.services.map((s) => {
-              return (new Service(s['ID'], s['Name_L1'], s['Name_L2'], s['Name_L3'], s['Name_L4']));
-            });
-          } else {
-            return null;
-          }
+      await (this.communicationService.post(payload, 'ExternalData/read')).then(async (data: Message) => {
+        let result = await this.isValidPayload(data);
+        if (result == Result.Success) {
+          let servicesPayload = data.payload;
+          services = servicesPayload.services.map((s) => {
+            return (new Service(s['ID'], s['Name_L1'], s['Name_L2'], s['Name_L3'], s['Name_L4']));
+          });
         } else {
           return null;
         }
@@ -209,16 +203,13 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('segment');
       let segments = new Array<Segment>();
 
-      await (this.communicationService.post(payload, 'ExternalData/read')).then((data: Message) => {
-        if (data) {
-          if (data.payload) {
-            let segmentsPayload = data.payload;
-            segments = segmentsPayload.segments.map((s) => {
-              return (new Segment(s['ID'], s['Name_L1'], s['Name_L2'], s['Name_L3'], s['Name_L4']));
-            });
-          } else {
-            return null;
-          }
+      await (this.communicationService.post(payload, 'ExternalData/read')).then(async (data: Message) => {
+        let result = await this.isValidPayload(data);
+        if (result == Result.Success) {
+          let segmentsPayload = data.payload;
+          segments = segmentsPayload.segments.map((s) => {
+            return (new Segment(s['ID'], s['Name_L1'], s['Name_L2'], s['Name_L3'], s['Name_L4']));
+          });
         } else {
           return null;
         }
@@ -240,18 +231,15 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('hall');
       let halls = Array<Hall>();
 
-      await (this.communicationService.post(payload, 'ExternalData/read')).then((data: Message) => {
-        if (data) {
-          if (data.payload) {
-            let hallsPayload = data.payload;
+      await (this.communicationService.post(payload, 'ExternalData/read')).then(async (data: Message) => {
+        let result = await this.isValidPayload(data);
+        if (result == Result.Success) {
+          let hallsPayload = data.payload;
 
-            halls = hallsPayload.halls.map((h) => {
-              return (new Hall(h['ID'], h['Name_L1'], h['Name_L2'], h['Name_L3'], h['Name_L4'], h['GuidingText_L1'],
-                h['GuidingText_L2'], h['GuidingText_L3'], h['GuidingText_L4'], h['Color']));
-            });
-          } else {
-            return null;
-          }
+          halls = hallsPayload.halls.map((h) => {
+            return (new Hall(h['ID'], h['Name_L1'], h['Name_L2'], h['Name_L3'], h['Name_L4'], h['GuidingText_L1'],
+              h['GuidingText_L2'], h['GuidingText_L3'], h['GuidingText_L4'], h['Color']));
+          });
         } else {
           return null;
         }
@@ -273,18 +261,14 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('user');
       let users = new Array<User>();
 
-      await (this.communicationService.post(payload, 'ExternalData/read')).then((data: Message) => {
-        if (data) {
-          if (data.payload) {
-
-            let usersPayload = data.payload;
-            users = usersPayload.users.map((u) => {
-              return (new User(u['ID'], u['LoginName'], u['Name_L1'], u['Name_L2'], u['Name_L3'],
-                u['Name_L4']));
-            });
-          } else {
-            return null;
-          }
+      await (this.communicationService.post(payload, 'ExternalData/read')).then(async (data: Message) => {
+        let result = await this.isValidPayload(data);
+        if (result == Result.Success) {
+          let usersPayload = data.payload;
+          users = usersPayload.users.map((u) => {
+            return (new User(u['ID'], u['LoginName'], u['Name_L1'], u['Name_L2'], u['Name_L3'],
+              u['Name_L4']));
+          });
         } else {
           return null;
         }
@@ -310,9 +294,10 @@ export class CacheManagerService {
 
       let counterInfo = new Array<CounterInfo>();
 
-      await this.communicationService.post(requestpayload, 'ExternalData/getAllCountersStatus').then((data: Message) => {
-        if (data) {
-          if (data.payload && data.payload.countersInfo) {
+      await this.communicationService.post(requestpayload, 'ExternalData/getAllCountersStatus').then(async (data: Message) => {
+        let result = await this.isValidPayload(data);
+        if (result == Result.Success) {
+          if (data.payload.countersInfo) {
             counterInfo = data.payload.countersInfo.map((CI) => {
               if (CI.currentState) {
                 let type = +CI.currentState.activityType;
@@ -354,6 +339,26 @@ export class CacheManagerService {
       return payload;
     } catch (error) {
       this.logger.error(error);
+    }
+  }
+
+  /**
+  * @summary check if the Payload is valid or not
+  * @param {Message} message - The message received.
+  * @return { Promise<Result>} Result enum wrapped in a promise.
+  */
+  async isValidPayload(message: Message): Promise<Result> {
+    try {
+      let result = Result.Failed;
+      if (message) {
+        if (message.payload) {
+          result = Result.Success;
+        }
+      }
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+      return Result.Failed;
     }
   }
 }
