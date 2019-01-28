@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CounterInfo } from '../shared/models/countersInfo';
+import { CounterInfo, Counter } from '../shared/models/countersInfo';
 import { ActionTypes, LCDStatus, Result } from '../shared/models/enums';
 import { LCDInfo } from '../shared/models/LCDInfo';
 import { LCDCache } from '../shared/models/cache';
@@ -10,6 +10,9 @@ import { CacheService } from '../shared/services/cache.service';
 import { StateService } from '../shared/services/state.service';
 import { CountersOption, MainLCDConfiguration } from '../shared/models/cs-component';
 import { EventsService } from '../shared/services/events.service';
+import { Service } from '../shared/models/service';
+import { Segment } from '../shared/models/segment';
+import { Hall } from '../shared/models/hall';
 
 @Injectable()
 export class LCDInfoService {
@@ -132,23 +135,23 @@ export class LCDInfoService {
     try {
       let result = await this.checkCounters(message);
       if (result == Result.Success) {
-          let countersInfo = message.payload.countersInfo;
-          let counters = this.prepareCounterData(countersInfo);
-          let cache = this.cacheService.getCache();
+        let countersInfo = message.payload.countersInfo;
+        let counters = this.prepareCounterData(countersInfo);
+        let cache = this.cacheService.getCache();
 
-          cache.countersInfo = counters;
+        cache.countersInfo = counters;
 
-          this.filterCounters();
+        this.filterCounters();
 
-          cache.countersInfo = this.updateCounters(counters, cache.countersInfo);
-          this.cacheService.setCache(cache);
+        cache.countersInfo = this.updateCounters(counters, cache.countersInfo);
+        this.cacheService.setCache(cache);
 
-          let updateResult = await this.updateLCDResult();
+        let updateResult = await this.updateLCDResult();
 
-          if (updateResult === Result.Success) {
-            this.setLastUpdateTime();
-          }
+        if (updateResult === Result.Success) {
+          this.setLastUpdateTime();
         }
+      }
     } catch (error) {
       this.logger.error(error);
     }
@@ -223,55 +226,16 @@ export class LCDInfoService {
           let lcdCounter = new LCDInfo();
 
           /** map the counter info  */
-          if (cache.counters && counter.counterID) {
-            let tmpCounter = cache.counters.find(i => i.id.toString() === counter.counterID.toString());
-            if (tmpCounter) {
-              lcdCounter.CounterNameL1 = tmpCounter.nameL1;
-              lcdCounter.CounterNameL2 = tmpCounter.nameL2;
-              lcdCounter.CounterNameL3 = tmpCounter.nameL3;
-              lcdCounter.CounterNameL4 = tmpCounter.nameL4;
-              lcdCounter.CounterNumber = tmpCounter.number;
-              lcdCounter.CounterDirection = tmpCounter.direction;
-            }
-          }
+          await this.fillCounterData(lcdCounter, cache.counters, counter.counterID.toString());
 
           /** map the service info  */
-          if (cache.services && counter.serviceID) {
-            let tmpService = cache.services.find(i => i.id.toString() === counter.serviceID.toString());
-            if (tmpService) {
-              lcdCounter.ServiceNameL1 = tmpService.nameL1;
-              lcdCounter.ServiceNameL2 = tmpService.nameL2;
-              lcdCounter.ServiceNameL3 = tmpService.nameL3;
-              lcdCounter.ServiceNameL4 = tmpService.nameL4;
-            }
-          }
+          await this.fillServiceData(lcdCounter, cache.services, counter.serviceID);
 
           /** map the segment info  */
-          if (cache.segments && counter.segmentID) {
-            let tmpSegment = cache.segments.find(i => i.id.toString() === counter.segmentID.toString());
-            if (tmpSegment) {
-              lcdCounter.SegmentNameL1 = tmpSegment.nameL1;
-              lcdCounter.SegmentNameL2 = tmpSegment.nameL2;
-              lcdCounter.SegmentNameL3 = tmpSegment.nameL3;
-              lcdCounter.SegmentNameL4 = tmpSegment.nameL4;
-            }
-          }
+          await this.fillSegmentData(lcdCounter, cache.segments, counter.segmentID);
 
           /** map the hall info  */
-          if (cache.halls && counter.hallID) {
-            let tmpHall = cache.halls.find(i => i.id.toString() === counter.hallID.toString());
-            if (tmpHall) {
-              lcdCounter.HallNameL1 = tmpHall.nameL1;
-              lcdCounter.HallNameL2 = tmpHall.nameL2;
-              lcdCounter.HallNameL3 = tmpHall.nameL3;
-              lcdCounter.HallNameL4 = tmpHall.nameL4;
-              lcdCounter.HallColor = tmpHall.color;
-              lcdCounter.HallGuidingTextL1 = tmpHall.guidingTextL1;
-              lcdCounter.HallGuidingTextL2 = tmpHall.guidingTextL2;
-              lcdCounter.HallGuidingTextL3 = tmpHall.guidingTextL3;
-              lcdCounter.HallGuidingTextL4 = tmpHall.guidingTextL4;
-            }
-          }
+          await this.fillHallData(lcdCounter, cache.halls, counter.hallID);
 
           /** map the user info  */
           if (cache.users && counter.userID) {
@@ -562,4 +526,76 @@ export class LCDInfoService {
       return Result.Failed
     }
   }
+
+  async fillCounterData(lcdCounter: LCDInfo, counters: Counter[], counterID: string): Promise<void> {
+    try {
+      if (counters && counterID) {
+        let tmpCounter = counters.find(i => i.id.toString() === counterID.toString());
+        if (tmpCounter) {
+          lcdCounter.CounterNameL1 = tmpCounter.nameL1;
+          lcdCounter.CounterNameL2 = tmpCounter.nameL2;
+          lcdCounter.CounterNameL3 = tmpCounter.nameL3;
+          lcdCounter.CounterNameL4 = tmpCounter.nameL4;
+          lcdCounter.CounterNumber = tmpCounter.number;
+          lcdCounter.CounterDirection = tmpCounter.direction;
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async fillServiceData(lcdCounter: LCDInfo, services: Service[], serviceID: string): Promise<void> {
+    try {
+      if (services && serviceID) {
+        let tmpService = services.find(i => i.id.toString() === serviceID.toString());
+        if (tmpService) {
+          lcdCounter.ServiceNameL1 = tmpService.nameL1;
+          lcdCounter.ServiceNameL2 = tmpService.nameL2;
+          lcdCounter.ServiceNameL3 = tmpService.nameL3;
+          lcdCounter.ServiceNameL4 = tmpService.nameL4;
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async fillSegmentData(lcdCounter: LCDInfo, segments: Segment[], segmentID: string): Promise<void> {
+    try {
+      if (segments && segmentID) {
+        let tmpSegment = segments.find(i => i.id.toString() === segmentID.toString());
+        if (tmpSegment) {
+          lcdCounter.SegmentNameL1 = tmpSegment.nameL1;
+          lcdCounter.SegmentNameL2 = tmpSegment.nameL2;
+          lcdCounter.SegmentNameL3 = tmpSegment.nameL3;
+          lcdCounter.SegmentNameL4 = tmpSegment.nameL4;
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async fillHallData(lcdCounter: LCDInfo, halls: Hall[], hallID: string): Promise<void> {
+    try {
+      if (halls && hallID) {
+        let tmpHall = halls.find(i => i.id.toString() === hallID.toString());
+        if (tmpHall) {
+          lcdCounter.HallNameL1 = tmpHall.nameL1;
+          lcdCounter.HallNameL2 = tmpHall.nameL2;
+          lcdCounter.HallNameL3 = tmpHall.nameL3;
+          lcdCounter.HallNameL4 = tmpHall.nameL4;
+          lcdCounter.HallColor = tmpHall.color;
+          lcdCounter.HallGuidingTextL1 = tmpHall.guidingTextL1;
+          lcdCounter.HallGuidingTextL2 = tmpHall.guidingTextL2;
+          lcdCounter.HallGuidingTextL3 = tmpHall.guidingTextL3;
+          lcdCounter.HallGuidingTextL4 = tmpHall.guidingTextL4;
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
 }

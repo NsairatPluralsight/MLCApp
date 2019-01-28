@@ -39,19 +39,19 @@ export class NgIncludeDirective implements OnInit, OnChanges {
   */
   parseTemplate(res: string) {
     try {
+      let newElement;
       if (this.type === 'style') {
-        let style = document.createElement('style');
-        style.type = 'text/css';
-        style.appendChild(document.createTextNode(res));
-        this.element.nativeElement.innerHTML = '';
-        this.element.nativeElement.appendChild(style);
+        newElement = document.createElement('style');
+        newElement.type = 'text/css';
+
       } else if (this.type === 'script') {
-        let script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.appendChild(document.createTextNode(res));
-        this.element.nativeElement.innerHTML = '';
-        this.element.nativeElement.appendChild(script);
+        newElement = document.createElement('script');
+        newElement.type = 'text/javascript';
       }
+
+      newElement.appendChild(document.createTextNode(res));
+      this.element.nativeElement.innerHTML = '';
+      this.element.nativeElement.appendChild(newElement);
     } catch (error) {
       this.logger.error(error);
     }
