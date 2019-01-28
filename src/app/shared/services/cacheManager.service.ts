@@ -44,7 +44,7 @@ export class CacheManagerService {
       let result = Result.Failed;
       this.mainLCD = await this.getComponent(playerID);
 
-      if (!this.mainLCD) {
+      if (this.mainLCD) {
         this.branchID = this.mainLCD.queueBranch_ID;
         this.counters = await this.getCounters();
 
@@ -64,7 +64,7 @@ export class CacheManagerService {
                 if (this.users && this.users.length > 0) {
                   this.countersInfo = await this.getCountersData();
 
-                  if (!this.countersInfo || this.countersInfo.length <= 0) {
+                  if (this.countersInfo && this.countersInfo.length > 0) {
                     this.fillCache();
                     result = Result.Success;
                   }
