@@ -14,6 +14,7 @@ import { Service } from '../shared/models/service';
 import { Segment } from '../shared/models/segment';
 import { Hall } from '../shared/models/hall';
 import { HelperService } from '../shared/services/helper.service';
+import { User } from '../shared/models/user';
 
 @Injectable()
 export class LCDInfoService {
@@ -34,7 +35,7 @@ export class LCDInfoService {
   * @param {EventsService} eventsService - the eventsService object which used to listen to app events
   */
   constructor(private logger: LoggerService, private configuration: CacheManagerService, private cacheService: CacheService,
-     private stateService: StateService, private eventsService: EventsService, private helperService: HelperService) {
+    private stateService: StateService, private eventsService: EventsService, private helperService: HelperService) {
     this.eventsService.updateData.subscribe((result) => this.update(result));
     this.eventsService.updateConfig.subscribe((result) => this.updateConfig(result));
     this.eventsService.onDisconnect.subscribe(() => {
@@ -238,12 +239,7 @@ export class LCDInfoService {
           await this.fillHallData(lcdCounter, cache.halls, counter.hallID);
 
           /** map the user info  */
-          if (cache.users && counter.userID) {
-            let tmpUser = cache.users.find(i => i.id.toString() === counter.userID.toString());
-            if (tmpUser) {
-              lcdCounter.ServingEmployeeName = tmpUser.loginName;
-            }
-          }
+          await this.fillUserData(lcdCounter, cache.users, counter.userID);
 
           lcdCounter.LastCallTime = counter.lastCallTime;
           lcdCounter.Type = counter.activityType;
@@ -465,4 +461,16 @@ export class LCDInfoService {
     }
   }
 
+  async fillUserData(lcdCounter: LCDInfo, users: User[], userID: string): Promise<void> {
+    try {
+      if (users && userID) {
+        let tmpUser = users.find(i => i.id.toString() === userID.toString());
+        if (tmpUser) {
+          lcdCounter.ServingEmployeeName = tmpUser.loginName;
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
 }

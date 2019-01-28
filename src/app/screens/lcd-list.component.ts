@@ -6,6 +6,7 @@ import { LCDStatus } from '../shared/models/enums';
 import { LCDInfoService } from './lcd-info.service';
 import { EventsService } from '../shared/services/events.service';
 import { Message } from '../shared/models/message';
+import { HelperService } from '../shared/services/helper.service';
 
 @Component({
   selector: 'app-lcd-list',
@@ -25,8 +26,8 @@ export class LCDListComponent implements OnInit {
   * @param {StateService} statusService - the state object which used to set and get the status of the app
   * @param {ActivatedRoute} route - the route object which used to access the query parameters
   */
-  constructor(private route: ActivatedRoute, public lcdService: LCDInfoService,
-    private stateService: StateService, private logger: LoggerService, private eventsService: EventsService) {
+  constructor(private route: ActivatedRoute, public lcdService: LCDInfoService, private stateService: StateService,
+     private logger: LoggerService, private eventsService: EventsService, private helperService: HelperService) {
       this.eventsService.statusUpdate.subscribe(() => this.onAppStatusChange());
       this.eventsService.exuteCommand.subscribe((message) => this.handleCommand(message));
   }
@@ -74,7 +75,7 @@ export class LCDListComponent implements OnInit {
    */
   handleCommand(message: Message) {
     try {
-      this.commandText = this.lcdService.getCommandText(message);
+      this.commandText = this.helperService.getCommandText(message);
       if (this.commandText && this.commandText != '') {
         this.showCommandText = true;
         setTimeout(() => this.showCommandText = false , 20000);
