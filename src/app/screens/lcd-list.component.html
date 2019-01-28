@@ -1,0 +1,32 @@
+<div appNgInclude src="../MainLCD/theme/themeOptions.css" type="style"></div>
+<div class="row">
+  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+    <div class="table-responsive-lg">
+      <table class="table">
+        <thead>
+          <tr class="table_header_row">
+            <th *ngFor='let item of lcdService.lcdDesign' class="table_header_col" scope="col">{{item.Caption}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor='let info of lcdService.pageData' [ngClass]='{"blink": info.IsBlinking, "table_body_row": true}'
+            scope="row">
+            <td *ngFor='let item of lcdService.lcdDesign' class="table_body_col" [style.background-color]="(item.ID === 'HallColor') ? info[item.ID] : null"
+              scope="col">
+              {{ (item.ID === 'HallColor' || item.ID ===  'CounterDirection') ? null : info[item.ID]}}
+
+              <img *ngIf="item.ID === 'CounterDirection'" src="../MainLCD/theme/Images/{{info[item.ID]}}.png">
+
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<app-loading [isVisible]='showLoading'></app-loading>
+<div class='command_container' [ngClass]='{"show": showCommandText, "hide": !showCommandText}'>
+  <div class="command">
+    {{commandText}}
+  </div>
+</div>
