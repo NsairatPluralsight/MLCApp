@@ -146,8 +146,8 @@ describe('LcdInfoService', () => {
   describe('initialize', () => {
     it('it should intialize app', async () => {
       let updateLCDResultSpy = spyOn(service, 'updateLCDResult').and.callThrough();
-      let setLCDDesignSpy = spyOn(service, 'setLCDDesign').and.callThrough();
-      let setLastUpdateTimeSpy = spyOn(service, 'setLastUpdateTime').and.callThrough();
+      //let setLCDDesignSpy = spyOn(service, 'setLCDDesign').and.callThrough();
+      //let setLastUpdateTimeSpy = spyOn(service, 'setLastUpdateTime').and.callThrough();
       let refreshCacheSpy = spyOn(service, 'refreshCache').and.callThrough();
       let filterCountersSpy = spyOn(service, 'filterCounters').and.callThrough();
 
@@ -156,8 +156,8 @@ describe('LcdInfoService', () => {
       expect(result).toBe(Result.Success);
       expect(filterCountersSpy).toHaveBeenCalledTimes(1);
       expect(updateLCDResultSpy).toHaveBeenCalledTimes(1);
-      expect(setLCDDesignSpy).toHaveBeenCalledTimes(1);
-      expect(setLastUpdateTimeSpy).toHaveBeenCalledTimes(1);
+      //expect(setLCDDesignSpy).toHaveBeenCalledTimes(1);
+      //expect(setLastUpdateTimeSpy).toHaveBeenCalledTimes(1);
       expect(refreshCacheSpy).toHaveBeenCalledTimes(1);
     });
   });
@@ -250,7 +250,7 @@ describe('LcdInfoService', () => {
       let prepareCounterDataSpy = spyOn(service, 'prepareCounterData').and.callThrough();
       let updateCountersSpy = spyOn(service, 'updateCounters').and.callThrough();
       let updateLCDResultSpy = spyOn(service, 'updateLCDResult').and.callThrough();
-      let setLastUpdateTimeSpy = spyOn(service, 'setLastUpdateTime').and.callThrough();
+      //let setLastUpdateTimeSpy = spyOn(service, 'setLastUpdateTime').and.callThrough();
       let filterCountersSpy = spyOn(service, 'filterCounters').and.callThrough();
 
       let reqMessage = new Message();
@@ -295,7 +295,7 @@ describe('LcdInfoService', () => {
       expect(filterCountersSpy).toHaveBeenCalledTimes(1);
       expect(updateCountersSpy).toHaveBeenCalledTimes(1);
       expect(updateLCDResultSpy).toHaveBeenCalledTimes(1);
-      expect(setLastUpdateTimeSpy).toHaveBeenCalledTimes(1);
+      //expect(setLastUpdateTimeSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -303,7 +303,7 @@ describe('LcdInfoService', () => {
     it('shoud update mainLCD config in cache', async () => {
       let filterCountersSpy = spyOn(service, 'filterCounters').and.callThrough();
       let updateLCDResultSpy = spyOn(service, 'updateLCDResult').and.callThrough();
-      let setLastUpdateTimeSpy = spyOn(service, 'setLastUpdateTime').and.callThrough();
+      //let setLastUpdateTimeSpy = spyOn(service, 'setLastUpdateTime').and.callThrough();
 
       let payload = {
         branchID: 0,
@@ -327,7 +327,7 @@ describe('LcdInfoService', () => {
 
       expect(filterCountersSpy).toHaveBeenCalledTimes(1);
       expect(updateLCDResultSpy).toHaveBeenCalledTimes(1);
-      expect(setLastUpdateTimeSpy).toHaveBeenCalledTimes(1);
+      //expect(setLastUpdateTimeSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -350,54 +350,4 @@ describe('LcdInfoService', () => {
       }, 20000);
     });
   });
-
-  describe('isBlinking', () => {
-    it('should be true', async () => {
-      window['blinkingCounts'] = 5;
-      window['blinkingInterval'] = 2;
-
-      let result = await service.isBlinking(new Date());
-
-      expect(result).toBe(true);
-    });
-  });
-
-  describe('setLCDDesign', () => {
-    it('should set LCD Design', () => {
-      window['LCDElement'] = [
-        { ID: 'TicketNumber', Caption: 'Ticket EN' },
-        { ID: 'CounterNameL1', Caption: 'counterL1 EN' },
-        { ID: 'ServiceNameL1', Caption: 'ServiceL1 EN' },
-        { ID: 'HallNameL1', Caption: 'HallL1 EN' },
-      ];
-
-      let result = service.setLCDDesign();
-
-      expect(result).toBe(Result.Success);
-      expect(service.lcdDesign).toBeDefined();
-      expect(service.lcdDesign.length).toBe(4);
-    });
-  });
-
-  describe('setLastUpdateTime', () => {
-    it('should set last update time', async () => {
-      let spy = spyOn(service, 'setLastUpdateTime');
-
-      await service.setLastUpdateTime();
-
-      expect(spy).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('getCommandText', () => {
-    it('should return text', () => {
-      let message = new Message();
-      message.payload = new ResponsePayload();
-      message.payload.data = 'HELLO';
-      let text =  service.getCommandText(message);
-
-      expect(text).toEqual('HELLO');
-    });
-  });
-
 });

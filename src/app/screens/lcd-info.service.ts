@@ -13,10 +13,10 @@ import { EventsService } from '../shared/services/events.service';
 import { Service } from '../shared/models/service';
 import { Segment } from '../shared/models/segment';
 import { Hall } from '../shared/models/hall';
+import { HelperService } from '../shared/services/helper.service';
 
 @Injectable()
 export class LCDInfoService {
-  lcdDesign: any[];
   lcdData: LCDInfo[];
   pageData: LCDInfo[];
   playerID: number;
@@ -33,8 +33,8 @@ export class LCDInfoService {
   * @param {StateService} stateService - the state object which used to set and get the status of the app
   * @param {EventsService} eventsService - the eventsService object which used to listen to app events
   */
-  constructor(private logger: LoggerService, private configuration: CacheManagerService,
-    private cacheService: CacheService, private stateService: StateService, private eventsService: EventsService) {
+  constructor(private logger: LoggerService, private configuration: CacheManagerService, private cacheService: CacheService,
+     private stateService: StateService, private eventsService: EventsService, private helperService: HelperService) {
     this.eventsService.updateData.subscribe((result) => this.update(result));
     this.eventsService.updateConfig.subscribe((result) => this.updateConfig(result));
     this.eventsService.onDisconnect.subscribe(() => {
@@ -84,10 +84,10 @@ export class LCDInfoService {
 
         if (result === Result.Success) {
 
-          result = this.setLCDDesign();
+          result = this.helperService.setLCDDesign();
 
           if (result === Result.Success) {
-            this.setLastUpdateTime();
+            this.helperService.setLastUpdateTime();
             this.refreshCache();
             return Result.Success;
           }
@@ -133,7 +133,7 @@ export class LCDInfoService {
   */
   async update(message: Message): Promise<void> {
     try {
-      let result = await this.checkCounters(message);
+      let result = await this.helperService.checkCounters(message);
       if (result == Result.Success) {
         let countersInfo = message.payload.countersInfo;
         let counters = this.prepareCounterData(countersInfo);
@@ -149,7 +149,7 @@ export class LCDInfoService {
         let updateResult = await this.updateLCDResult();
 
         if (updateResult === Result.Success) {
-          this.setLastUpdateTime();
+          this.helperService.setLastUpdateTime();
         }
       }
     } catch (error) {
@@ -165,7 +165,7 @@ export class LCDInfoService {
   async updateConfig(message: Message): Promise<void> {
     try {
       let cache = this.cacheService.getCache();
-      let isValidMessage = await this.checkMessage(message, cache.mainLCD.id);
+      let isValidMessage = await this.helperService.checkMessage(message, cache.mainLCD.id);
       if (isValidMessage == Result.Success) {
         let mainLCDConfig = <MainLCDConfiguration>JSON.parse(message.payload.data);
 
@@ -187,7 +187,7 @@ export class LCDInfoService {
           let updateResult = await this.updateLCDResult();
 
           if (updateResult === Result.Success) {
-            this.setLastUpdateTime();
+            this.helperService.setLastUpdateTime();
           }
         }
       }
@@ -248,7 +248,7 @@ export class LCDInfoService {
           lcdCounter.LastCallTime = counter.lastCallTime;
           lcdCounter.Type = counter.activityType;
           lcdCounter.TicketNumber = counter.displayTicketNumber;
-          lcdCounter.IsBlinking = await this.isBlinking(new Date(counter.lastCallTime));
+          lcdCounter.IsBlinking = await this.helperService.isBlinking(new Date(counter.lastCallTime));
           lcdInfo.push(lcdCounter);
         }
       }
@@ -384,146 +384,13 @@ export class LCDInfoService {
   }
 
   /**
-  * @param {Date} lastCallTime - the date time of the last call has been made on a counter
-  * @returns {Promise<boolean>} returns whether the counter should be Blinking or not in the UI wrapped in a promise.
-  */
-  async isBlinking(lastCallTime: Date): Promise<boolean> {
-    try {
-      let isBlinking = false;
-
-      if (lastCallTime) {
-        let blinkingCounts = 5;
-        let blinkingInterval = 2;
-        let updateTime = new Date();
-        let timeDifference = 0;
-
-        if (window['lastUpdateTime']) {
-          updateTime = window['lastUpdateTime'];
-          timeDifference = new Date().getTime() - updateTime.getTime();
-        }
-
-        let tmpTimeDiffResult = updateTime.getTime() - lastCallTime.getTime();
-        let tmpMiliSeconds = tmpTimeDiffResult - timeDifference;
-        let tmpDiffSeconds = tmpMiliSeconds / 1000;
-
-        if (window['blinkingCounts']) {
-          blinkingCounts = window['blinkingCounts'];
-          blinkingInterval = window['blinkingInterval'];
-        }
-        let TotalBlinkingTime = blinkingCounts * blinkingInterval
-        if (tmpDiffSeconds < TotalBlinkingTime) {
-          isBlinking = true;
-        }
-      }
-      return isBlinking;
-    } catch (error) {
-      this.logger.error(error);
-      return false;
-    }
-  }
-
-  /**
-  * Sets the last update time which is needed in isBlinking method
-  */
-  async setLastUpdateTime(): Promise<void> {
-    try {
-      if (window['lastUpdateTime']) {
-        window['lastUpdateTime'] = new Date();
-      }
-    } catch (error) {
-      this.logger.error(error);
-    }
-  }
-
-  /**
-  * Gets the LCD columns the the customer want to display
-  * @return {Result} Result enum.
-  */
-  setLCDDesign(): Result {
-    try {
-      if (window['LCDElement']) {
-        this.lcdDesign = window['LCDElement'];
-
-        return Result.Success;
-      } else {
-        return Result.Failed;
-      }
-    } catch (error) {
-      this.logger.error(error);
-      return Result.Failed;
-    }
-  }
-
-  /**
-  * Calls the fetchCache method every 10 minutes
+  * @summary Calls the fetchCache method every 10 minutes
   */
   refreshCache(): void {
     try {
       setTimeout(this.fetchCache.bind(this), 600000);
     } catch (error) {
       this.logger.error(error);
-    }
-  }
-
-  /**
-  * @param {Message} message - the command message received by the event
-  * @returns {string} returns the command text that received in message or empty string
-  */
-  getCommandText(message: Message): string {
-    try {
-      let text = '';
-      if (message.payload) {
-        if (message.payload.data) {
-          text = message.payload.data;
-        }
-      }
-      return text;
-    } catch (error) {
-      this.logger.error(error);
-      return '';
-    }
-  }
-
-  /**
-  * @async
-  * @summary check if this message belongs to this component or not
-  * @param {Message} message - the message received by the update event
-  * @param {number} id - the mainLCd component ID
-  * @returns {Promise<Result>} Result enum wrapped in a promise.
-  */
-  async checkMessage(message: Message, id: number): Promise<Result> {
-    try {
-      let result = Result.Failed;
-      if (message.payload && message.payload.componentID == id) {
-        if (message.payload.data) {
-          result = Result.Success;
-        }
-      }
-      return result;
-    } catch (error) {
-      this.logger.error(error);
-      return Result.Failed;
-    }
-  }
-
-  /**
-  * @async
-  * @summary check if this message contains counters or not
-  * @param {Message} message - the message received
-  * @returns {Promise<Result>} Result enum wrapped in a promise.
-  */
-  async checkCounters(message: Message): Promise<Result> {
-    try {
-      let result = Result.Failed;
-      if (message.payload) {
-        if (message.payload.countersInfo && message.payload.countersInfo.length > 0) {
-          result = Result.Success;
-        }
-      }
-      return result;
-    } catch (error) {
-      this.logger.error(error);
-      return Result.Failed
     }
   }
 
