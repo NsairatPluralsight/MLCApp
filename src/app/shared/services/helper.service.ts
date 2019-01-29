@@ -18,8 +18,6 @@ export class HelperService {
     let isBlinking = false;
 
     if (lastCallTime) {
-      let blinkingCounts = 5;
-      let blinkingInterval = 2;
       let updateTime = new Date();
       let timeDifference = 0;
 
@@ -32,10 +30,9 @@ export class HelperService {
       let tmpMiliSeconds = tmpTimeDiffResult - timeDifference;
       let tmpDiffSeconds = tmpMiliSeconds / 1000;
 
-      if (window['blinkingCounts']) {
-        blinkingCounts = window['blinkingCounts'];
-        blinkingInterval = window['blinkingInterval'];
-      }
+      let blinkingCounts = window['blinkingCounts'] ? window['blinkingCounts'] : 5;
+      let blinkingInterval = window['blinkingInterval'] ? window['blinkingInterval'] : 2;
+
       let TotalBlinkingTime = blinkingCounts * blinkingInterval
       if (tmpDiffSeconds < TotalBlinkingTime) {
         isBlinking = true;
