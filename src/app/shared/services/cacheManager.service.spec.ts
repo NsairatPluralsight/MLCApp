@@ -3,7 +3,7 @@ import { CacheManagerService } from './cacheManager.service';
 import { CommunicationService } from './communication.service';
 import { LoggerService } from './logger.service';
 import { Message } from '../models/message';
-import { EventEmitter } from '@angular/core';
+import { Result } from '../models/enums';
 
 describe('Cache Manager Service', () => {
   let configService: CacheManagerService;
@@ -236,75 +236,132 @@ describe('Cache Manager Service', () => {
       expect(payload.EntityName).toEqual('counter');
       expect(payload.BranchID).toEqual(branchid.toString());
     });
+
+    it('Should not return a valid config Payload', () => {
+      let id;
+      configService.branchID = id;
+
+      let payload = configService.getConfigPayload('counter');
+
+      expect(payload).toBe(undefined);
+    });
   });
 
   describe('getComponent', () => {
-    it('Should return mainLCD component', async () => {
-      let mainLCD = await configService.getComponent(163);
+    it('Should return Success', async () => {
+      let result = await configService.getComponent(163);
 
-      expect(configService.branchID).toBe(106);
-      expect(mainLCD).not.toBeNull();
-      expect(mainLCD.configuration).not.toBeNull();
+      expect(configService.branchID).toBe(115);
+      expect(result).toBe(Result.Success);
+    });
+
+    it('Should return Failed', async () => {
+      let spy = spyOn(configService, "isValidPayload").and.returnValue(Result.Failed);
+
+      let result = await configService.getComponent(15);
+
+      expect(result).toBe(Result.Failed);
     });
   });
 
   describe('getCounters', () => {
-    it('Should return Counters', async () => {
-      let counters = await configService.getCounters();
+    it('Should return sucess', async () => {
+      let result = await configService.getCounters();
 
       expect(configService.branchID).toBe(106);
-      expect(counters).not.toBeNull();
-      expect(counters.length).toBe(5);
+      expect(result).toBe(Result.Success);
+    });
+
+    it('Should return Failed', async () => {
+      let spy = spyOn(configService, "isValidPayload").and.returnValue(Result.Failed);
+
+      let result = await configService.getCounters();
+
+      expect(result).toBe(Result.Failed);
     });
   });
 
   describe('getServices', () => {
-    it('Should return Services', async () => {
-      let services = await configService.getServices();
+    it('Should return success', async () => {
+      let result = await configService.getServices();
 
       expect(configService.branchID).toBe(106);
-      expect(services).not.toBeNull();
-      expect(services.length).toBe(6);
+      expect(result).toBe(Result.Success);
+    });
+
+    it('Should return Failed', async () => {
+      let spy = spyOn(configService, "isValidPayload").and.returnValue(Result.Failed);
+
+      let result = await configService.getServices();
+
+      expect(result).toBe(Result.Failed);
     });
   });
 
   describe('getSegments', () => {
-    it('Should return Segments', async () => {
-      let segments = await configService.getSegments();
+    it('Should return Success', async () => {
+      let result = await configService.getSegments();
 
       expect(configService.branchID).toBe(106);
-      expect(segments).not.toBeNull();
-      expect(segments.length).toBe(6);
+      expect(result).toBe(Result.Success);
+    });
+
+    it('Should return Failed', async () => {
+      let spy = spyOn(configService, "isValidPayload").and.returnValue(Result.Failed);
+
+      let result = await configService.getSegments();
+
+      expect(result).toBe(Result.Failed);
     });
   });
 
   describe('getHalls', () => {
-    it('Should return Halls', async () => {
-      let halls = await configService.getHalls();
+    it('Should return true', async () => {
+      let result = await configService.getHalls();
 
       expect(configService.branchID).toBe(106);
-      expect(halls).not.toBeNull();
-      expect(halls.length).toBe(3);
+      expect(result).toBe(Result.Success);
+    });
+
+    it('Should return Failed', async () => {
+      let spy = spyOn(configService, "isValidPayload").and.returnValue(Result.Failed);
+
+      let result = await configService.getHalls();
+
+      expect(result).toBe(Result.Failed);
     });
   });
 
   describe('getUsers', () => {
-    it('Should return Users', async () => {
-      let users = await configService.getUsers();
+    it('Should return Success', async () => {
+      let result = await configService.getUsers();
 
       expect(configService.branchID).toBe(106);
-      expect(users).not.toBeNull();
-      expect(users.length).toBe(6);
+      expect(result).toBe(Result.Success);
+    });
+
+    it('Should return Failed', async () => {
+      let spy = spyOn(configService, "isValidPayload").and.returnValue(Result.Failed);
+
+      let result = await configService.getUsers();
+
+      expect(result).toBe(Result.Failed);
     });
   });
 
   describe('getCountersData', () => {
     it('Should return Counters Data', async () => {
-      let CountersData = await configService.getCountersData();
+      let result = await configService.getCountersData();
 
-      expect(configService.branchID).toBe(106);
-      expect(CountersData).not.toBeNull();
-      expect(CountersData.length).toBe(2);
+      expect(result).toBe(Result.Success);
+    });
+
+    it('Should return Failed', async () => {
+      let spy = spyOn(configService, "isValidPayload").and.returnValue(Result.Failed);
+
+      let result = await configService.getCountersData();
+
+      expect(result).toBe(Result.Failed);
     });
   });
 
@@ -321,7 +378,6 @@ describe('Cache Manager Service', () => {
 
       await configService.intialaize(163);
 
-      //expect(configService.branchID).toBe(115);
       expect(mainLCDSpy).toHaveBeenCalledTimes(1);
       expect(segmentsSpy).toHaveBeenCalledTimes(1);
       expect(servicesSpy).toHaveBeenCalledTimes(1);
@@ -331,6 +387,27 @@ describe('Cache Manager Service', () => {
       expect(countersSpy).toHaveBeenCalledTimes(1);
       expect(fillCacheSpy).toHaveBeenCalledTimes(1);
     });
+
+    it('should fail to intialaize data and calls all methods', async () => {
+      let mainLCDSpy = spyOn(configService, "getComponent").and.returnValue(Result.Failed);
+      let segmentsSpy = spyOn(configService, 'getSegments').and.callThrough();
+      let servicesSpy = spyOn(configService, 'getServices').and.callThrough();
+      let usersSpy = spyOn(configService, 'getUsers').and.callThrough();
+      let hallsSpy = spyOn(configService, 'getHalls').and.callThrough();
+      let countersDataSpy = spyOn(configService, 'getCountersData').and.callThrough();
+      let countersSpy = spyOn(configService, 'getCounters').and.callThrough();
+
+      await configService.intialaize(167);
+
+      expect(mainLCDSpy).toHaveBeenCalledTimes(1);
+      expect(segmentsSpy).toHaveBeenCalledTimes(0);
+      expect(servicesSpy).toHaveBeenCalledTimes(0);
+      expect(usersSpy).toHaveBeenCalledTimes(0);
+      expect(hallsSpy).toHaveBeenCalledTimes(0);
+      expect(countersDataSpy).toHaveBeenCalledTimes(0);
+      expect(countersSpy).toHaveBeenCalledTimes(0);
+    });
+
   });
 
   describe('fillCache', () => {

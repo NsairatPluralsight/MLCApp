@@ -9,11 +9,12 @@ import { LCDInfoService } from './lcd-info.service';
 import { LCDStatus } from '../shared/models/enums';
 import { EventsService } from '../shared/services/events.service';
 import { Message } from '../shared/models/message';
+import { HelperService } from '../shared/services/helper.service';
 
 describe('LcdListComponent', () => {
   let component: LCDListComponent;
   let fixture: ComponentFixture<LCDListComponent>;
-  let mockLoggerService, mockStateService, mockLCDInfoService;
+  let mockLoggerService, mockStateService, mockLCDInfoService, mockHelperService;
 
   mockStateService = {
     setStatus() {},
@@ -36,6 +37,10 @@ describe('LcdListComponent', () => {
   mockEventsService.exuteCommand = new EventEmitter();
   mockEventsService.statusUpdate =  new EventEmitter();
 
+  mockHelperService = {
+    getCommandText() { return 'test'}
+  }
+
   beforeEach(() => {
     mockLoggerService = jasmine.createSpyObj(['error']);
     TestBed.configureTestingModule({
@@ -46,7 +51,8 @@ describe('LcdListComponent', () => {
           { provide: LoggerService, useValue: mockLoggerService },
           { provide: StateService, useValue: mockStateService },
           { provide: LCDInfoService, useValue: mockLCDInfoService },
-          { provide: EventsService, useValue: mockEventsService }
+          { provide: EventsService, useValue: mockEventsService },
+          { provide: HelperService, useValue:  mockHelperService}
         ],
       schemas: [NO_ERRORS_SCHEMA]
     });

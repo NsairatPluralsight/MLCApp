@@ -170,7 +170,7 @@ export class LCDInfoService {
       let cache = this.cacheService.getCache();
       let isValidMessage = await this.helperService.checkMessage(message, cache.mainLCD.id);
 
-      if (isValidMessage == Result.Success) {
+      if (isValidMessage == Result.Failed) {
         return;
       }
 
@@ -394,6 +394,13 @@ export class LCDInfoService {
     }
   }
 
+  /**
+   * @async
+   * @summary check if counters is valid and get the mainLCD view data from it
+   * @param {LCDInfo} lcdCounter - object to be filled
+   * @param {Counter[]} counters - the counter array received from queuing
+   * @param {string} counterID - the cached counter id to fill
+   */
   async fillCounterData(lcdCounter: LCDInfo, counters: Counter[], counterID: string): Promise<void> {
     try {
       if (counters && counterID) {
@@ -412,6 +419,13 @@ export class LCDInfoService {
     }
   }
 
+  /**
+   * @async
+   * @summary check if services is valid and get the mainLCD view data from it
+   * @param {LCDInfo} lcdCounter - object to be filled
+   * @param {Service[]} Service - the Service array received from queuing
+   * @param {string} Service - the cached counter id to fill
+   */
   async fillServiceData(lcdCounter: LCDInfo, services: Service[], serviceID: string): Promise<void> {
     try {
       if (services && serviceID) {
@@ -428,6 +442,13 @@ export class LCDInfoService {
     }
   }
 
+    /**
+   * @async
+   * @summary check if segments is valid and get the mainLCD view data from it
+   * @param {LCDInfo} lcdCounter - object to be filled
+   * @param {Segment[]} segments - the segments array received from queuing
+   * @param {string} segmentID - the cached segment id to fill
+   */
   async fillSegmentData(lcdCounter: LCDInfo, segments: Segment[], segmentID: string): Promise<void> {
     try {
       if (segments && segmentID) {
@@ -444,6 +465,13 @@ export class LCDInfoService {
     }
   }
 
+  /**
+   * @async
+   * @summary check if halls is valid and get the mainLCD view data from it
+   * @param {LCDInfo} lcdCounter - object to be filled
+   * @param {Hall[]} halls - the halls array received from queuing
+   * @param {string} hallID - the cached hall id to fill
+   */
   async fillHallData(lcdCounter: LCDInfo, halls: Hall[], hallID: string): Promise<void> {
     try {
       if (halls && hallID) {
@@ -465,6 +493,13 @@ export class LCDInfoService {
     }
   }
 
+  /**
+   * @async
+   * @summary check if users is valid and get the mainLCD view data from it
+   * @param {LCDInfo} lcdCounter - object to be filled
+   * @param {User[]} users - the users array received from queuing
+   * @param {string} userID - the cached user id to fill
+   */
   async fillUserData(lcdCounter: LCDInfo, users: User[], userID: string): Promise<void> {
     try {
       if (users && userID) {

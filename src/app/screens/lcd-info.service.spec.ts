@@ -1,12 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-
 import { LCDInfoService } from './lcd-info.service';
 import { LoggerService } from '../shared/services/logger.service';
 import { StateService } from '../shared/services/state.service';
 import { CacheService } from '../shared/services/cache.service';
 import { CacheManagerService } from '../shared/services/cacheManager.service';
 import { EventEmitter } from '@angular/core';
-import { Result, MainLCDDisplayMode } from '../shared/models/enums';
+import { Result, MainLCDDisplayMode, Direction } from '../shared/models/enums';
 import { LCDCache } from '../shared/models/cache';
 import { User } from '../shared/models/user';
 import { Service } from '../shared/models/service';
@@ -15,12 +14,12 @@ import { Hall } from '../shared/models/hall';
 import { Message } from '../shared/models/message';
 import { CSComponent, MainLCDConfiguration } from '../shared/models/cs-component';
 import { EventsService } from '../shared/services/events.service';
-import { ResponsePayload } from '../shared/models/payload';
+import { HelperService } from '../shared/services/helper.service';
+import { LCDInfo } from '../shared/models/LCDInfo';
 
 describe('LcdInfoService', () => {
   let service: LCDInfoService;
-  let mockLoggerservice, mockStateService, mockCacheService, mockCacheManagerService;
-  window['lastUpdateTime'] = new Date();
+  let mockLoggerservice, mockStateService, mockCacheService, mockCacheManagerService, mockHelperService;
 
   window['LCDElement'] = [
     { ID: 'TicketNumber', Caption: 'Ticket EN' },
@@ -41,9 +40,13 @@ describe('LcdInfoService', () => {
   let countersInfo = [{
     queueBranch_ID: '115', counterID: 131, displayTicketNumber: 'S019', hallID: '117', id: '1604',
     lastCallTime: 1540981960167, segmentID: '109', serviceID: '110', activityType: 5, userID: '-1'
+  }, {
+    queueBranch_ID: '115', counterID: 119, displayTicketNumber: 'S020', hallID: '117', id: '1604',
+    lastCallTime: 1540981960167, segmentID: '109', serviceID: '110', activityType: 5, userID: '-1'
   }] as CounterInfo[];
 
-  let counters = [{ id: 118, nameL1: 'C1', nameL2: 'C1', nameL3: '', nameL4: '', number: 1 }] as Counter[];
+  let counters = [{ id: 118, nameL1: 'C1', nameL2: 'C1', nameL3: '', nameL4: '', number: 1 },
+  { id: 119, nameL1: 'C2', nameL2: 'C2', nameL3: '', nameL4: '', number: 1 }] as Counter[];
   let halls = [{
     color: '#ff0000', guidingTextL1: 'Follow the Red Line', guidingTextL2: 'Follow the Red Line', guidingTextL3: null,
     guidingTextL4: null, id: 117, nameL1: 'H1', nameL2: 'H1', nameL3: '', nameL4: ''
@@ -56,7 +59,7 @@ describe('LcdInfoService', () => {
   let configCounters = [
     {
       direction: 1,
-      id: 131,
+      id: 119,
       nameL1: "C2",
       nameL2: "C2",
       nameL3: "",
@@ -95,7 +98,7 @@ describe('LcdInfoService', () => {
   mockCacheService = {
     LCDCache: new LCDCache(),
     setCache() { },
-    getCache(): LCDCache { return cache; },
+    getCache(): LCDCache { return cache },
     updateData: new EventEmitter(),
   };
 
@@ -113,6 +116,17 @@ describe('LcdInfoService', () => {
   mockEventsService.exuteCommand = new EventEmitter();
   mockEventsService.statusUpdate =  new EventEmitter();
 
+  mockHelperService = {
+    getLCDDesign() { return Result.Success},
+    async isBlinking() { return true },
+    getCommandText() { return 'test'},
+    async checkMessage(message) {
+      return message ? Result.Success : Result.Failed;
+    },
+    async checkCounters() { return Result.Success},
+    async setLastUpdateTime() { window['lastUpdateTime'] = new Date() },
+  };
+
   beforeEach(() => {
     mockLoggerservice = jasmine.createSpyObj(['error']);
     TestBed.configureTestingModule({
@@ -123,6 +137,7 @@ describe('LcdInfoService', () => {
         { provide: CacheService, useValue: mockCacheService },
         { provide: CacheManagerService, useValue: mockCacheManagerService },
         { provide: EventsService, useValue: mockEventsService },
+        { provide: HelperService, useValue:  mockHelperService}
       ]
     });
     mockCacheService.LCDCache = cache;
@@ -146,8 +161,6 @@ describe('LcdInfoService', () => {
   describe('initialize', () => {
     it('it should intialize app', async () => {
       let updateLCDResultSpy = spyOn(service, 'updateLCDResult').and.callThrough();
-      //let setLCDDesignSpy = spyOn(service, 'setLCDDesign').and.callThrough();
-      //let setLastUpdateTimeSpy = spyOn(service, 'setLastUpdateTime').and.callThrough();
       let refreshCacheSpy = spyOn(service, 'refreshCache').and.callThrough();
       let filterCountersSpy = spyOn(service, 'filterCounters').and.callThrough();
 
@@ -156,8 +169,6 @@ describe('LcdInfoService', () => {
       expect(result).toBe(Result.Success);
       expect(filterCountersSpy).toHaveBeenCalledTimes(1);
       expect(updateLCDResultSpy).toHaveBeenCalledTimes(1);
-      //expect(setLCDDesignSpy).toHaveBeenCalledTimes(1);
-      //expect(setLastUpdateTimeSpy).toHaveBeenCalledTimes(1);
       expect(refreshCacheSpy).toHaveBeenCalledTimes(1);
     });
   });
@@ -170,14 +181,28 @@ describe('LcdInfoService', () => {
       expect(LCDArray).not.toBeNull();
       expect(LCDArray.length).toBe(1);
     });
+    it('should not create LcdInfo Array', async () => {
+      let tCache: LCDCache;
+      let LCDArray = await service.getLCDData(tCache);
+
+      expect(LCDArray).toBe(undefined);
+    });
   });
 
   describe('updateLCDResult', () => {
-    it('should set lcdData by calling the getLCDData', async () => {
+    it('should return Success, lcdData by calling the getLCDData', async () => {
       let spy = spyOn(service, 'getLCDData').and.callThrough();
       let result = await service.updateLCDResult();
 
       expect(result).toBe(Result.Success);
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not set lcdData by calling the getLCDData', async () => {
+      let spy = spyOn(service, 'getLCDData').and.returnValue(null);
+      let result = await service.updateLCDResult();
+
+      expect(result).toBe(Result.Failed);
       expect(spy).toHaveBeenCalledTimes(1);
     });
   });
@@ -202,7 +227,7 @@ describe('LcdInfoService', () => {
 
       let updatedCounters = await service.updateCounters(tCountersInfo, countersInfo);
 
-      expect(updatedCounters.length).toBe(0);
+      expect(updatedCounters.length).toBe(1);
     });
   });
 
@@ -250,7 +275,6 @@ describe('LcdInfoService', () => {
       let prepareCounterDataSpy = spyOn(service, 'prepareCounterData').and.callThrough();
       let updateCountersSpy = spyOn(service, 'updateCounters').and.callThrough();
       let updateLCDResultSpy = spyOn(service, 'updateLCDResult').and.callThrough();
-      //let setLastUpdateTimeSpy = spyOn(service, 'setLastUpdateTime').and.callThrough();
       let filterCountersSpy = spyOn(service, 'filterCounters').and.callThrough();
 
       let reqMessage = new Message();
@@ -295,15 +319,29 @@ describe('LcdInfoService', () => {
       expect(filterCountersSpy).toHaveBeenCalledTimes(1);
       expect(updateCountersSpy).toHaveBeenCalledTimes(1);
       expect(updateLCDResultSpy).toHaveBeenCalledTimes(1);
-      //expect(setLastUpdateTimeSpy).toHaveBeenCalledTimes(1);
     });
+
+    it('should not update cache', async () => {
+      let prepareCounterDataSpy = spyOn(service, 'prepareCounterData').and.callThrough();
+      let updateCountersSpy = spyOn(service, 'updateCounters').and.callThrough();
+      let updateLCDResultSpy = spyOn(service, 'updateLCDResult').and.callThrough();
+      let filterCountersSpy = spyOn(service, 'filterCounters').and.callThrough();
+
+      let reqMessage: Message;
+      await service.update(reqMessage);
+
+      expect(prepareCounterDataSpy).toHaveBeenCalledTimes(0);
+      expect(filterCountersSpy).toHaveBeenCalledTimes(0);
+      expect(updateCountersSpy).toHaveBeenCalledTimes(0);
+      expect(updateLCDResultSpy).toHaveBeenCalledTimes(0);
+    });
+
   });
 
   describe('updateConfig', () => {
     it('shoud update mainLCD config in cache', async () => {
       let filterCountersSpy = spyOn(service, 'filterCounters').and.callThrough();
       let updateLCDResultSpy = spyOn(service, 'updateLCDResult').and.callThrough();
-      //let setLastUpdateTimeSpy = spyOn(service, 'setLastUpdateTime').and.callThrough();
 
       let payload = {
         branchID: 0,
@@ -327,15 +365,27 @@ describe('LcdInfoService', () => {
 
       expect(filterCountersSpy).toHaveBeenCalledTimes(1);
       expect(updateLCDResultSpy).toHaveBeenCalledTimes(1);
-      //expect(setLastUpdateTimeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('shoud not update mainLCD config in cache', async () => {
+      let filterCountersSpy = spyOn(service, 'filterCounters').and.callThrough();
+      let updateLCDResultSpy = spyOn(service, 'updateLCDResult').and.callThrough();
+      let reqMessage: Message;
+
+      await service.updateConfig(reqMessage);
+
+      expect(filterCountersSpy).toHaveBeenCalledTimes(0);
+      expect(updateLCDResultSpy).toHaveBeenCalledTimes(0);
     });
   });
 
   describe('filterCounters', () => {
     it('should filter counters in cache accourding to configurations', async () => {
+      mockCacheService.getCache()
+
       await service.filterCounters();
 
-      expect(cache.counters.length).toEqual(0);
+      expect(cache.counters.length).toEqual(1);
     });
   });
 
@@ -348,6 +398,111 @@ describe('LcdInfoService', () => {
       setTimeout(() => {
         expect(handlePagingSpy).toHaveBeenCalledTimes(2);
       }, 20000);
+    });
+  });
+
+  describe('fillCounterData', () => {
+    it('should fill counter data', async () => {
+      let counterID = 118;
+      let lcdCounter =  new LCDInfo();
+
+      await service.fillCounterData(lcdCounter, counters, counterID.toString());
+
+      expect(lcdCounter.CounterNameL1).toBe('C1');
+    });
+
+    it('should not fill counter data', async () => {
+      let tCounters;
+      let counterID = 118;
+      let lcdCounter =  new LCDInfo();
+
+      await service.fillCounterData(lcdCounter, tCounters, counterID.toString());
+
+      expect(lcdCounter.CounterNameL1).toBe(undefined);
+    });
+  });
+
+  describe('fillServiceData', () => {
+    it('should fill Service data', async () => {
+      let serviceID = 110;
+      let lcdCounter =  new LCDInfo();
+
+      await service.fillServiceData(lcdCounter, services, serviceID.toString());
+
+      expect(lcdCounter.ServiceNameL1).toBe('Service1');
+    });
+
+    it('should not fill Service data', async () => {
+      let tServices;
+      let serviceID = 118;
+      let lcdCounter =  new LCDInfo();
+
+      await service.fillServiceData(lcdCounter, tServices, serviceID.toString());
+
+      expect(lcdCounter.ServiceNameL1).toBe(undefined);
+    });
+  });
+
+  describe('fillSegmentData', () => {
+    it('should fill segment data', async () => {
+      let segmentID = 109;
+      let lcdCounter = new LCDInfo();
+
+      await service.fillSegmentData(lcdCounter, segments, segmentID.toString());
+
+      expect(lcdCounter.SegmentNameL1).toBe('shabab');
+    });
+
+    it('should not fill segment data', async () => {
+      let tSegments;
+      let segmentID = 109;
+      let lcdCounter = new LCDInfo();
+
+      await service.fillSegmentData(lcdCounter, tSegments, segmentID.toString());
+
+      expect(lcdCounter.SegmentNameL1).toBe(undefined);
+    });
+  });
+
+  describe('fillHallData', () => {
+    it('should fill segment data', async () => {
+      let hallID = 117;
+      let lcdCounter = new LCDInfo();
+
+      await service.fillHallData(lcdCounter, halls, hallID.toString());
+
+      expect(lcdCounter.HallNameL1).toBe('H1');
+    });
+
+    it('should not fill segment data', async () => {
+      let tHalls;
+      let hallID = 109;
+      let lcdCounter = new LCDInfo();
+
+      await service.fillHallData(lcdCounter, tHalls, hallID.toString());
+
+      expect(lcdCounter.HallNameL1).toBe(undefined);
+    });
+  });
+
+  describe('fillUserData', () => {
+    it('should fill user data', async () => {
+      let userID = 2;
+      let lcdCounter = new LCDInfo();
+
+      await service.fillUserData(lcdCounter, users, userID.toString());
+
+      expect(lcdCounter.ServingEmployeeName).toBe('root');
+    });
+
+    it('should not fill user data', async () => {
+      let tUsers;
+      let userID = 109;
+      let lcdCounter = new LCDInfo();
+
+      await service.fillUserData(lcdCounter, tUsers, userID.toString());
+
+      expect(lcdCounter.HallNameL1).toBe(undefined);
     });
   });
 });
