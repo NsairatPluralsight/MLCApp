@@ -89,7 +89,7 @@ export class LCDInfoService {
           result = this.helperService.getLCDDesign();
 
           if (result === Result.Success) {
-            this.lcdDesign =  this.helperService.lcdDesign;
+            this.lcdDesign = this.helperService.lcdDesign;
             this.helperService.setLastUpdateTime();
             this.refreshCache();
             return Result.Success;
@@ -169,29 +169,31 @@ export class LCDInfoService {
     try {
       let cache = this.cacheService.getCache();
       let isValidMessage = await this.helperService.checkMessage(message, cache.mainLCD.id);
+
       if (isValidMessage == Result.Success) {
-        let mainLCDConfig = <MainLCDConfiguration>JSON.parse(message.payload.data);
+        return;
+      }
 
-        let isThereNewCounter = false;
+      let mainLCDConfig = <MainLCDConfiguration>JSON.parse(message.payload.data);
+      let isThereNewCounter = false;
 
-        mainLCDConfig.counters.forEach(element => {
-          if (cache.mainLCD.configuration.counters.findIndex(e => e.id === element.id) == -1) {
-            isThereNewCounter = true;
-          }
-        });
+      mainLCDConfig.counters.forEach(element => {
+        if (cache.mainLCD.configuration.counters.findIndex(e => e.id === element.id) == -1) {
+          isThereNewCounter = true;
+        }
+      });
 
-        if (isThereNewCounter) {
-          this.fetchCache();
-        } else {
-          cache.mainLCD.configuration = mainLCDConfig;
-          this.cacheService.setCache(cache);
-          this.filterCounters();
+      if (isThereNewCounter) {
+        this.fetchCache();
+      } else {
+        cache.mainLCD.configuration = mainLCDConfig;
+        this.cacheService.setCache(cache);
+        this.filterCounters();
 
-          let updateResult = await this.updateLCDResult();
+        let updateResult = await this.updateLCDResult();
 
-          if (updateResult === Result.Success) {
-            this.helperService.setLastUpdateTime();
-          }
+        if (updateResult === Result.Success) {
+          this.helperService.setLastUpdateTime();
         }
       }
     } catch (error) {
@@ -324,27 +326,27 @@ export class LCDInfoService {
       let cache = this.cacheService.getCache();
       let mainLCDConfig = cache.mainLCD.configuration;
 
-      if (mainLCDConfig.countersOption == CountersOption.Custom) {
-
-        cache.counters = cache.counters.filter(element => {
-          if (mainLCDConfig.counters.findIndex(e => e.id === element.id) > -1) {
-            return element;
-          }
-        })
-          .map(element => {
-            element.direction = mainLCDConfig.counters.find(c => c.id === element.id).direction
-            return element;
-          });
-
-        cache.countersInfo = cache.countersInfo.filter(element => {
-          if (mainLCDConfig.counters.findIndex(e => e.id === element.counterID) > -1) {
-            return element;
-          }
-        });
-
-        this.cacheService.setCache(cache);
+      if (mainLCDConfig.countersOption !== CountersOption.Custom) {
+        return;
       }
 
+      cache.counters = cache.counters.filter(element => {
+        if (mainLCDConfig.counters.findIndex(e => e.id === element.id) > -1) {
+          return element;
+        }
+      })
+        .map(element => {
+          element.direction = mainLCDConfig.counters.find(c => c.id === element.id).direction
+          return element;
+        });
+
+      cache.countersInfo = cache.countersInfo.filter(element => {
+        if (mainLCDConfig.counters.findIndex(e => e.id === element.counterID) > -1) {
+          return element;
+        }
+      });
+
+      this.cacheService.setCache(cache);
     } catch (error) {
       this.logger.error(error);
     }
