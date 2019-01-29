@@ -43,10 +43,6 @@ export class CacheManagerService {
     try {
       let result = await this.getComponent(playerID);
 
-      if (result == Result.Success) {
-        this.branchID = this.mainLCD.queueBranch_ID;
-      }
-
       result = (result === Result.Success) ? await this.getCounters() : result;
 
       result = (result === Result.Success) ? await this.getServices() : result;
