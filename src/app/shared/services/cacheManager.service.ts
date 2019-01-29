@@ -41,9 +41,7 @@ export class CacheManagerService {
   */
   async intialaize(playerID: number): Promise<Result> {
     try {
-      let result: Result;
-
-      result = await this.getComponent(playerID);
+      let result = await this.getComponent(playerID);
 
       if (result == Result.Failed) {
         return Result.Failed;
