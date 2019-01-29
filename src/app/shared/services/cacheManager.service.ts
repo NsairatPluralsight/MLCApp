@@ -55,7 +55,7 @@ export class CacheManagerService {
 
       result = (result === Result.Success) ? await this.getCountersData() : result;
 
-      result = (result === Result.Success) ? this.fillCache() : result;
+      await this.fillCache();
 
       return Result.Success;
     } catch (error) {
@@ -67,22 +67,22 @@ export class CacheManagerService {
   /**
   * @summary fill Cache in one object (counters, services, segments, halls, users, countersInfo)
   */
-  fillCache(): Result {
+ async fillCache(): Promise<void> {
     try {
-      this.configData = {
-        segments: this.segments,
-        counters: this.counters,
-        services: this.services,
-        users: this.users,
-        halls: this.halls,
-        countersInfo: this.countersInfo,
-        mainLCD: this.mainLCD
-      };
-      this.branchID = this.mainLCD.queueBranch_ID;
-      return Result.Success;
+      if(this.mainLCD) {
+        this.branchID = this.mainLCD.queueBranch_ID;
+        this.configData = {
+          segments: this.segments,
+          counters: this.counters,
+          services: this.services,
+          users: this.users,
+          halls: this.halls,
+          countersInfo: this.countersInfo,
+          mainLCD: this.mainLCD
+        };
+      }
     } catch (error) {
       this.logger.error(error);
-      return Result.Failed;
     }
   }
 
