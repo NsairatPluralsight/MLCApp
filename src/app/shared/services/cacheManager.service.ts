@@ -41,41 +41,30 @@ export class CacheManagerService {
   */
   async intialaize(playerID: number): Promise<Result> {
     try {
-      let result = Result.Failed;
-      this.mainLCD = await this.getComponent(playerID);
+      let result: Result;
 
-      if (this.mainLCD) {
-        this.branchID = this.mainLCD.queueBranch_ID;
-        this.counters = await this.getCounters();
+      result = await this.getComponent(playerID);
 
-        if (this.counters && this.counters.length > 0) {
-
-          this.services = await this.getServices();
-
-          if (this.services && this.services.length > 0) {
-            this.segments = await this.getSegments();
-
-            if (this.segments && this.segments.length > 0) {
-              this.halls = await this.getHalls();
-
-              if (this.halls && this.halls.length > 0) {
-                this.users = await this.getUsers();
-
-                if (this.users && this.users.length > 0) {
-                  this.countersInfo = await this.getCountersData();
-
-                  if (this.countersInfo && this.countersInfo.length > 0) {
-                    this.fillCache();
-                    result = Result.Success;
-                  }
-                }
-              }
-            }
-          }
-        }
+      if (result == Result.Failed) {
+        return Result.Failed;
       }
+      this.branchID = this.mainLCD.queueBranch_ID;
 
-      return result;
+      result = (result === Result.Success) ? await this.getCounters() : result;
+
+      result = (result === Result.Success) ? await this.getServices() : result;
+
+      result = (result === Result.Success) ? await this.getSegments() : result;
+
+      result = (result === Result.Success) ? await this.getHalls() : result;
+
+      result = (result === Result.Success) ? await this.getUsers() : result;
+
+      result = (result === Result.Success) ? await this.getCountersData() : result;
+
+      this.fillCache();
+
+      return Result.Success;
     } catch (error) {
       this.logger.error(error);
       return Result.Failed;
@@ -106,7 +95,7 @@ export class CacheManagerService {
   * @summary get MainLCD from Component service
   * @return {Promise<CSComponent[]>} CSComponent Object wrapped in a promise.
   */
-  async getComponent(playerID: number): Promise<CSComponent> {
+  async getComponent(playerID: number): Promise<Result> {
     try {
       let requestpayload = new RequestPayload();
       requestpayload.orgid = 1;
@@ -131,7 +120,8 @@ export class CacheManagerService {
           mainLCD = null;
         }
       });
-      return mainLCD;
+      this.mainLCD = mainLCD;
+      return this.mainLCD ? Result.Success : Result.Failed;
     } catch (error) {
       this.logger.error(error);
       return null;
@@ -143,7 +133,7 @@ export class CacheManagerService {
   * @summary get Counters that belongs to a one branch
   * @return {Promise<Counter[]>} Array of Counter Objects wrapped in a promise.
   */
-  async getCounters(): Promise<Counter[]> {
+  async getCounters(): Promise<Result> {
     try {
       let payload = this.getConfigPayload('counter');
       let counters = Array<Counter>();
@@ -156,10 +146,11 @@ export class CacheManagerService {
             return (new Counter(c['ID'], c['Name_L1'], c['Name_L2'], c['Name_L3'], c['Name_L4'], c['Number']));
           });
         } else {
-          return null;
+          counters = null;
         }
       });
-      return counters;
+      this.counters = counters;
+      return  this.counters && this.counters.length > 0 ? Result.Success : Result.Failed;
     } catch (error) {
       this.logger.error(error);
       return null;
@@ -171,7 +162,7 @@ export class CacheManagerService {
   * @summary get Services that belongs to a one branch
   * @return {Promise<Service[]>} Array of Service Objects wrapped in a promise.
   */
-  async getServices(): Promise<Service[]> {
+  async getServices(): Promise<Result> {
     try {
       let payload = this.getConfigPayload('service');
       let services = new Array<Service>();
@@ -184,10 +175,11 @@ export class CacheManagerService {
             return (new Service(s['ID'], s['Name_L1'], s['Name_L2'], s['Name_L3'], s['Name_L4']));
           });
         } else {
-          return null;
+          services = null;
         }
       });
-      return services;
+      this.services = services;
+      return  this.services && this.services.length > 0 ? Result.Success : Result.Failed;
     } catch (error) {
       this.logger.error(error);
     }
@@ -198,7 +190,7 @@ export class CacheManagerService {
   * @summary get Segments that belongs to a one branch
   * @return {Promise<Segment[]>} Array of Segment Objects wrapped in a promise.
   */
-  async getSegments(): Promise<Segment[]> {
+  async getSegments(): Promise<Result> {
     try {
       let payload = this.getConfigPayload('segment');
       let segments = new Array<Segment>();
@@ -211,11 +203,11 @@ export class CacheManagerService {
             return (new Segment(s['ID'], s['Name_L1'], s['Name_L2'], s['Name_L3'], s['Name_L4']));
           });
         } else {
-          return null;
+          segments = null;
         }
       });
-
-      return segments;
+      this.segments = segments;
+      return  this.segments && this.segments.length > 0 ? Result.Success : Result.Failed;
     } catch (error) {
       this.logger.error(error);
     }
@@ -226,7 +218,7 @@ export class CacheManagerService {
   * @summary get Halls that belongs to a one branch
   * @return {Promise<Hall[]>} Array of Hall Objects wrapped in a promise.
   */
-  async getHalls(): Promise<Hall[]> {
+  async getHalls(): Promise<Result> {
     try {
       let payload = this.getConfigPayload('hall');
       let halls = Array<Hall>();
@@ -241,11 +233,11 @@ export class CacheManagerService {
               h['GuidingText_L2'], h['GuidingText_L3'], h['GuidingText_L4'], h['Color']));
           });
         } else {
-          return null;
+          halls = null;
         }
       });
-
-      return halls;
+      this.halls = halls;
+      return  this.halls && this.halls.length > 0 ? Result.Success : Result.Failed;
     } catch (error) {
       this.logger.error(error);
     }
@@ -256,7 +248,7 @@ export class CacheManagerService {
   * @summary get Users that belongs to a one branch
   * @return {Promise<User[]>} Array of User Objects wrapped in a promise.
   */
-  async getUsers(): Promise<User[]> {
+  async getUsers(): Promise<Result> {
     try {
       let payload = this.getConfigPayload('user');
       let users = new Array<User>();
@@ -270,11 +262,11 @@ export class CacheManagerService {
               u['Name_L4']));
           });
         } else {
-          return null;
+          users = null;
         }
       });
-
-      return users;
+      this.users = users;
+      return  this.users && this.users.length > 0 ? Result.Success : Result.Failed;
     } catch (error) {
       this.logger.error(error);
     }
@@ -285,7 +277,7 @@ export class CacheManagerService {
   * @summary get Counters Data that belongs to a one branch
   * @return {Promise<CounterInfo[]>} Array of CounterInfo Objects wrapped in a promise.
   */
-  async getCountersData(): Promise<CounterInfo[]> {
+  async getCountersData(): Promise<Result> {
     try {
       let requestpayload = new RequestPayload();
       requestpayload.orgid = 1;
@@ -312,13 +304,14 @@ export class CacheManagerService {
               }
             });
           } else {
-            return null;
+            counterInfo = null;
           }
         } else {
-          return null;
+          counterInfo = null;
         }
       });
-      return counterInfo.filter((e) => e !== undefined);
+      this.countersInfo = counterInfo.filter((e) => e !== undefined);;
+      return  this.countersInfo && this.countersInfo.length > 0 ? Result.Success : Result.Failed;
     } catch (error) {
       this.logger.error(error);
     }
