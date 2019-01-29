@@ -13,4 +13,4 @@ before_script:
   - npm install -g @angular/cli
 script:
   - ng test --browsers=ChromeHeadlessNoSandbox
-  - ng e2e
+  - ng e2e --browsers=ChromeHeadlessNoSandbox
