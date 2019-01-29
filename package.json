@@ -24,6 +24,7 @@
     "@types/promise-retry": "^1.1.2",
     "core-js": "^2.5.4",
     "express": "^4.16.3",
+    "protractor-console-plugin": "^0.1.1",
     "puppeteer": "^1.11.0",
     "rxjs": "^6.0.0",
     "socket.io": "^2.1.1",
