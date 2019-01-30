@@ -20,7 +20,7 @@ exports.config = {
     },
   },
   directConnect: true,
-  baseUrl: '',
+  baseUrl: 'http://localhost:4200/',
   framework: 'jasmine',
   jasmineNodeOpts: {
     showColors: true,
@@ -38,7 +38,8 @@ exports.config = {
       package: "protractor-console-plugin",
       failOnWarning: false,
       failOnError: true,
-      logWarnings: true
+      logWarnings: true,
+      exclude: ['Failed to load resource', 'HttpErrorResponse']
     }
   ]
 };
