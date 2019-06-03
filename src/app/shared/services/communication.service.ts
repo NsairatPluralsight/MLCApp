@@ -6,45 +6,79 @@ import io from 'socket.io-client';
 import { ConnectionSettings } from '../models/connection';
 import { Message } from '../models/message';
 import { EventsService } from './events.service';
+import { LoggerService } from './logger.service';
+import { CacheService } from './cache.service';
 
 @Injectable()
 export class CommunicationService {
-  private serviceUrl: string;
+  socket: any;
 
   /**
-  * initialize Connection Settings and listen to MQ using socket.io
   * @constructor
+  * @summary initialize Connection Settings and listen to MQ using socket.io
   * @param {HttpClient} http - The http object used to make http calls
   */
-  constructor(private http: HttpClient, private eventsService: EventsService) {
-    let connSettings = new ConnectionSettings();
-    this.serviceUrl = connSettings.serverURL + 'PostMessage';
-
-    const socket = io(connSettings.serverURL);
-
-    socket.on('Queuing/branchUpdates', (evt) => {
-      this.eventsService.updateData.emit(evt);
-    });
-
-    socket.on('ComponentService/component_Configuration_Changed', (evt) => {
-      this.eventsService.updateConfig.emit(evt);
-    });
-
-    socket.on('ComponentService/Execute_Command', (evt) => {
-      this.eventsService.exuteCommand.emit(evt);
-    });
-
-    socket.on('disconnect', () => {
-      this.eventsService.onDisconnect.emit();
-    });
+  constructor(private http: HttpClient, private eventsService: EventsService,
+    private logger: LoggerService, private cacheService: CacheService) {
   }
 
   /**
-  * Make a post request to the End point
+   * @async
+   * @summary - connect socket io to the endpoint and listen to some events
+   * @param {string} token - string token to connect with endpoint
+   */
+  async initializeSocketIO(token: string): Promise<void> {
+    try {
+      this.socket = io('/', { query: "token=" + JSON.stringify(token) });
+
+      this.socket.on('Queuing/branchUpdates', (evt) => {
+        this.eventsService.updateData.emit(evt);
+      });
+
+      this.socket.on('ComponentService/component_Configuration_Changed', (evt) => {
+        this.eventsService.updateConfig.emit(evt);
+      });
+
+      this.socket.on('ComponentService/Execute_Command', (evt) => {
+        this.eventsService.exuteCommand.emit(evt);
+      });
+
+      this.socket.on('disconnect', () => {
+        this.eventsService.onDisconnect.emit();
+      });
+
+      this.socket.on('error', (pError: any) => {
+        let error = JSON.parse(pError);
+
+        if (error.status && error.status == 401) {
+          this.eventsService.unAuthorized.emit(error);
+          console.log(error)
+        }
+      });
+
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  /**
+   * @async
+   * @summary - close Socket.io connection
+   */
+  async closeSocketIO(): Promise<void> {
+    try {
+      this.socket.disconnect();
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  /**
   * @async
+  * @summary - Make a post request to the End point
   * @param {any} payload - the payload various by topic name.
   * @param {string} topicName - The ID of a branch.
-  * @return {Promise<object>}  Result enum wrapped in a promise.
+  * @return {Promise<object>} - response message wrapped in a promise.
   */
   async post(payload: any, topicName: string): Promise<object> {
     let reqMessage = new Message();
@@ -52,9 +86,12 @@ export class CommunicationService {
     reqMessage.topicName = topicName;
     reqMessage.payload = payload;
 
-    return await this.http.post<any>(this.serviceUrl, reqMessage, {
+    let token = this.cacheService.getUser().token;
+
+    return await this.http.post<any>(ConnectionSettings.postMessage, reqMessage, {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
       })
     })
       .toPromise()
@@ -62,10 +99,30 @@ export class CommunicationService {
   }
 
   /**
-  * Handles Error catched from http request
-  * @param {HttpErrorResponse} err - the payload various by topic name.
-  * @return {Promise<never>}  Result enum wrapped in a promise.
-  */
+   * @async
+   * @summary - Make a post request to the End point used for Authentication
+   * @param {string} url - the url to send the request to
+   * @param {any} body - the body of the request
+   * @param {any} options - object may contain headers or parameters etc.
+   * @return {Promise<any>} - return response object wrapped in a promise.
+   */
+  async AuthPost(url: string, body: any, options?: any) {
+    try {
+
+      return await this.http.post<any>(url, body, options).toPromise()
+      .catch(catchError(this.handleError));
+
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+ /**
+ * @private
+ * @summary - Handles Error catched from http request
+ * @param {HttpErrorResponse} err - the payload various by topic name.
+ * @return {Promise<never>}  Result enum wrapped in a promise.
+ */
   private handleError(err: HttpErrorResponse) {
     let errorMessage = '';
 

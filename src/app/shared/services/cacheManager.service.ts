@@ -97,7 +97,7 @@ export class CacheManagerService {
 
       let mainLCD = new CSComponent();
 
-      await this.communicationService.post(requestpayload, 'ComponentService/Manager/GetComponent').then(async (data: Message) => {
+      await this.communicationService.post(requestpayload, 'ComponentService/Manager.GetComponent').then(async (data: Message) => {
         let result = await this.isValidPayload(data);
         if (result == Result.Success) {
           let responsePayload = <ResponsePayload>data.payload;
@@ -132,7 +132,7 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('counter');
       let counters = Array<Counter>();
 
-      await this.communicationService.post(payload, 'ExternalData/read').then(async (data: Message) => {
+      await this.communicationService.post(payload, 'QueuingData/read').then(async (data: Message) => {
         let result = await this.isValidPayload(data);
         if (result == Result.Success) {
           let countersPayload = data.payload;
@@ -161,7 +161,7 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('service');
       let services = new Array<Service>();
 
-      await (this.communicationService.post(payload, 'ExternalData/read')).then(async (data: Message) => {
+      await (this.communicationService.post(payload, 'QueuingData/read')).then(async (data: Message) => {
         let result = await this.isValidPayload(data);
         if (result == Result.Success) {
           let servicesPayload = data.payload;
@@ -190,7 +190,7 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('segment');
       let segments = new Array<Segment>();
 
-      await (this.communicationService.post(payload, 'ExternalData/read')).then(async (data: Message) => {
+      await (this.communicationService.post(payload, 'QueuingData/read')).then(async (data: Message) => {
         let result = await this.isValidPayload(data);
         if (result == Result.Success) {
           let segmentsPayload = data.payload;
@@ -219,7 +219,7 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('hall');
       let halls = Array<Hall>();
 
-      await (this.communicationService.post(payload, 'ExternalData/read')).then(async (data: Message) => {
+      await (this.communicationService.post(payload, 'QueuingData/read')).then(async (data: Message) => {
         let result = await this.isValidPayload(data);
         if (result == Result.Success) {
           let hallsPayload = data.payload;
@@ -250,7 +250,7 @@ export class CacheManagerService {
       let payload = this.getConfigPayload('user');
       let users = new Array<User>();
 
-      await (this.communicationService.post(payload, 'ExternalData/read')).then(async (data: Message) => {
+      await (this.communicationService.post(payload, 'QueuingData/read')).then(async (data: Message) => {
         let result = await this.isValidPayload(data);
         if (result == Result.Success) {
           let usersPayload = data.payload;
@@ -284,7 +284,7 @@ export class CacheManagerService {
 
       let counterInfo = new Array<CounterInfo>();
 
-      await this.communicationService.post(requestpayload, 'ExternalData/getAllCountersStatus').then(async (data: Message) => {
+      await this.communicationService.post(requestpayload, 'QueuingData/getAllCountersStatus').then(async (data: Message) => {
         let result = await this.isValidPayload(data);
         if (result == Result.Success) {
           if (data.payload.countersInfo) {

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { CacheService } from './cache.service';
 import { LoggerService } from './logger.service';
 import { LCDCache } from '../models/cache';
-import { User } from '../models/user';
+import { User, AuthUser, loginUser } from '../models/user';
 import { Service } from '../models/service';
 import { Hall } from '../models/hall';
 import { CounterInfo, Counter } from '../models/countersInfo';
@@ -17,7 +17,7 @@ describe('CacheService', () => {
     displayTicketNumber: 'S019',
     hallID: '117',
     id: '1604',
-    lastCallTime: 1540981960167,
+    lastCallTime: '1540981960167',
     segmentID: '109',
     serviceID: '110',
     activityType: 5,
@@ -69,18 +69,35 @@ describe('CacheService', () => {
     service = TestBed.get(CacheService);
   });
 
-  it('should set and get cache', () => {
-    service.setCache(cache);
-    let Newcache = service.getCache();
+  describe('set/get cache', () => {
+    it('should set and get cache', () => {
+      service.setCache(cache);
+      let Newcache = service.getCache();
 
-    expect(Newcache).not.toBeNull();
-    expect(Newcache.segments.length).toBe(2);
-    expect(Newcache.services.length).toBe(2);
-    expect(Newcache.halls.length).toBe(1);
-    expect(Newcache.counters.length).toBe(2);
-    expect(Newcache.countersInfo.length).toBe(1);
-    expect(Newcache.users.length).toBe(6);
+      expect(Newcache).not.toBeNull();
+      expect(Newcache.segments.length).toBe(2);
+      expect(Newcache.services.length).toBe(2);
+      expect(Newcache.halls.length).toBe(1);
+      expect(Newcache.counters.length).toBe(2);
+      expect(Newcache.countersInfo.length).toBe(1);
+      expect(Newcache.users.length).toBe(6);
 
+    });
+  });
+
+  describe('set/get user', () => {
+    it('should set and get cache', () => {
+      let authUser = new AuthUser();
+      authUser.user = new loginUser();
+      authUser.token = 'testtoken';
+
+      service.setUser(authUser);
+      let newUser = service.getUser();
+
+      expect(newUser).not.toBeNull();
+      expect(newUser.user).not.toBeNull();
+      expect(newUser.token).toBe('testtoken');
+    });
   });
 
 });

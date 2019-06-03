@@ -9,11 +9,11 @@ export class CounterInfo {
   segmentID: string;
   serviceID: string;
   userID: string;
-  lastCallTime: number;
+  lastCallTime: string;
   activityType: ActionTypes;
 
   constructor(counterID: number, type: ActionTypes, branchID: string, id?: string, displayTicketNumber?: string, hallID?: string,
-     segmentID?: string, serviceID?: string, userID?: string, lastCallTime?: number) {
+     segmentID?: string, serviceID?: string, userID?: string, lastCallTime?: string) {
     this.queueBranch_ID = branchID;
     this.counterID = counterID;
     this.displayTicketNumber = displayTicketNumber;

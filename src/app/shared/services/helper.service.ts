@@ -91,7 +91,8 @@ export class HelperService {
       let text = '';
       if (message.payload) {
         if (message.payload.data) {
-          text = message.payload.data;
+          let obj = JSON.parse(message.payload.data);
+          text = obj.command;
         }
       }
       return text;

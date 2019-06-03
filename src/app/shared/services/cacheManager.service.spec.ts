@@ -83,7 +83,7 @@ describe('Cache Manager Service', () => {
       reqMessage.topicName = topicName;
       reqMessage.payload = payload;
 
-      if (topicName === 'ExternalData/getAllCountersStatus') {
+      if (topicName === 'QueuingData/getAllCountersStatus') {
 
         reqMessage.payload = {
           Branchid: '106',
@@ -119,7 +119,7 @@ describe('Cache Manager Service', () => {
           orgid: 1
         };
 
-      } else if(topicName === 'ComponentService/Manager/GetComponent') {
+      } else if(topicName === 'ComponentService/Manager.GetComponent') {
 
         reqMessage.payload = {
           data: jsonMainLCD,

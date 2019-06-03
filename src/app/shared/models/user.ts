@@ -15,3 +15,15 @@ export class User {
     this.nameL4 = nameL4;
   }
 }
+
+export class loginUser {
+  id: number;
+  username: string;
+  refreshToken: string;
+  password: string;
+}
+
+export class AuthUser {
+  user: loginUser;
+  token: string;
+}

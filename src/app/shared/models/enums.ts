@@ -11,7 +11,8 @@ export enum Result {
 export enum LCDStatus {
   Offline = 0,
   Connecting = 1,
-  Online = 2
+  Online = 2,
+  Unauthorized = 3,
 }
 
 export enum ActionTypes {
@@ -33,4 +34,21 @@ export enum Direction {
   None = 0,
   Right = 1,
   Left = 2
+}
+
+export enum LoginErrorCodes {
+  Success = 0,
+  Error = -1,
+  InvalidUsername = -900,
+  InvalidLoginData = -901,
+  UnauthorizedLogin = -902,
+  PasswordExpired = -903,
+  UserInactive = -904,
+  UserLocked = -905,
+  InvalidPassword = -906,
+  InvalidUserForLogout = -907,
+  RefreshTokenNotPresent = -908,
+  InvalidToken = -909,
+  InvalidRefreshToken = -910,
+  SSONotEnabled = -911
 }

@@ -15,6 +15,7 @@ import { Segment } from '../shared/models/segment';
 import { Hall } from '../shared/models/hall';
 import { HelperService } from '../shared/services/helper.service';
 import { User } from '../shared/models/user';
+import { AuthenticationService } from '../shared/services/authentication.service';
 
 @Injectable()
 export class LCDInfoService {
@@ -36,7 +37,7 @@ export class LCDInfoService {
   * @param {EventsService} eventsService - the eventsService object which used to listen to app events
   */
   constructor(private logger: LoggerService, private configuration: CacheManagerService, private cacheService: CacheService,
-    private stateService: StateService, private eventsService: EventsService, private helperService: HelperService) {
+    private stateService: StateService, private eventsService: EventsService, private helperService: HelperService, private AuthService: AuthenticationService) {
     this.eventsService.updateData.subscribe((result) => this.update(result));
     this.eventsService.updateConfig.subscribe((result) => this.updateConfig(result));
     this.eventsService.onDisconnect.subscribe(() => {
@@ -45,6 +46,21 @@ export class LCDInfoService {
         this.start(this.playerID);
       }
     });
+    this.eventsService.startApp.subscribe(() => this.start(this.playerID));
+  }
+
+  /**
+   *
+   * @param userName
+   * @param password
+   */
+  async Authenticate(userName: string, password: string) {
+    try {
+      let result = await this.AuthService.login(userName, password);
+      return result;
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   /**
@@ -142,11 +158,11 @@ export class LCDInfoService {
         let counters = this.prepareCounterData(countersInfo);
         let cache = this.cacheService.getCache();
 
-        cache.countersInfo = counters;
-
-        this.filterCounters();
+        //cache.countersInfo = counters;
 
         cache.countersInfo = this.updateCounters(counters, cache.countersInfo);
+
+        this.filterCounters();
         this.cacheService.setCache(cache);
 
         let updateResult = await this.updateLCDResult();
@@ -245,7 +261,7 @@ export class LCDInfoService {
           /** map the user info  */
           await this.fillUserData(lcdCounter, cache.users, counter.userID);
 
-          lcdCounter.LastCallTime = counter.lastCallTime;
+          lcdCounter.LastCallTime = new Date(counter.lastCallTime).getTime();
           lcdCounter.Type = counter.activityType;
           lcdCounter.TicketNumber = counter.displayTicketNumber;
           lcdCounter.IsBlinking = await this.helperService.isBlinking(new Date(counter.lastCallTime));
@@ -278,7 +294,7 @@ export class LCDInfoService {
               counterTransaction.displayTicketNumber, counterTransaction.hall_ID, counterTransaction.segment_ID,
               counterTransaction.service_ID, counterTransaction.user_ID, counterTransaction.lastCallTime));
           } else {
-            return (new CounterInfo(counter.id, type, this.branchID.toString()));
+            return (new CounterInfo(counter.id, type, this.configuration.branchID.toString()));
           }
         }
       });
@@ -341,7 +357,7 @@ export class LCDInfoService {
         });
 
       cache.countersInfo = cache.countersInfo.filter(element => {
-        if (mainLCDConfig.counters.findIndex(e => e.id === element.counterID) > -1) {
+        if (mainLCDConfig.counters.findIndex(e => e.id.toString() == element.counterID.toString()) > -1) {
           return element;
         }
       });
@@ -442,13 +458,13 @@ export class LCDInfoService {
     }
   }
 
-    /**
-   * @async
-   * @summary check if segments is valid and get the mainLCD view data from it
-   * @param {LCDInfo} lcdCounter - object to be filled
-   * @param {Segment[]} segments - the segments array received from queuing
-   * @param {string} segmentID - the cached segment id to fill
-   */
+  /**
+ * @async
+ * @summary check if segments is valid and get the mainLCD view data from it
+ * @param {LCDInfo} lcdCounter - object to be filled
+ * @param {Segment[]} segments - the segments array received from queuing
+ * @param {string} segmentID - the cached segment id to fill
+ */
   async fillSegmentData(lcdCounter: LCDInfo, segments: Segment[], segmentID: string): Promise<void> {
     try {
       if (segments && segmentID) {

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StateService } from '../shared/services/state.service';
 import { LoggerService } from '../shared/services/logger.service';
-import { LCDStatus } from '../shared/models/enums';
+import { LCDStatus, Result } from '../shared/models/enums';
 import { LCDInfoService } from './lcd-info.service';
 import { EventsService } from '../shared/services/events.service';
 import { Message } from '../shared/models/message';
@@ -17,6 +17,7 @@ export class LCDListComponent implements OnInit {
   showLoading: boolean;
   commandText: string;
   showCommandText: boolean;
+  showErrorIcon:boolean;
 
   /**
   * listens to update App status event
@@ -30,6 +31,7 @@ export class LCDListComponent implements OnInit {
      private logger: LoggerService, private eventsService: EventsService, private helperService: HelperService) {
       this.eventsService.statusUpdate.subscribe(() => this.onAppStatusChange());
       this.eventsService.exuteCommand.subscribe((message) => this.handleCommand(message));
+      this.eventsService.unAuthenticated.subscribe(() => this.showErrorIcon = true);
   }
 
    /**
@@ -39,9 +41,12 @@ export class LCDListComponent implements OnInit {
     try {
       this.showLoading = true;
       await this.route.queryParams.subscribe(async params => {
-        if (params && (params.id || params.ID)) {
-          let playerID =  params.id ? params.id : params.ID;
-          let result = await this.lcdService.start(parseInt(playerID));
+        if (params && params.pID && params.pUser && params.pPassword) {
+          let result = await this.lcdService.Authenticate(params.pUser, params.pPassword);
+
+          if(result == Result.Success) {
+            await this.lcdService.start(parseInt(params.pID));
+          }
         }
       });
     } catch (error) {
@@ -58,6 +63,7 @@ export class LCDListComponent implements OnInit {
       switch (this.stateService.getStatus()) {
         case LCDStatus.Online:
             this.showLoading = false;
+            this.showErrorIcon = false;
         break;
         case LCDStatus.Connecting:
         case LCDStatus.Offline:

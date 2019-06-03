@@ -5,7 +5,7 @@ import { StateService } from '../shared/services/state.service';
 import { CacheService } from '../shared/services/cache.service';
 import { CacheManagerService } from '../shared/services/cacheManager.service';
 import { EventEmitter } from '@angular/core';
-import { Result, MainLCDDisplayMode, Direction } from '../shared/models/enums';
+import { Result, MainLCDDisplayMode } from '../shared/models/enums';
 import { LCDCache } from '../shared/models/cache';
 import { User } from '../shared/models/user';
 import { Service } from '../shared/models/service';
@@ -16,10 +16,11 @@ import { CSComponent, MainLCDConfiguration } from '../shared/models/cs-component
 import { EventsService } from '../shared/services/events.service';
 import { HelperService } from '../shared/services/helper.service';
 import { LCDInfo } from '../shared/models/LCDInfo';
+import { AuthenticationService } from '../shared/services/authentication.service';
 
 describe('LcdInfoService', () => {
   let service: LCDInfoService;
-  let mockLoggerservice, mockStateService, mockCacheService, mockCacheManagerService, mockHelperService;
+  let mockLoggerservice, mockStateService, mockCacheService, mockCacheManagerService, mockHelperService, mockAuthenticationService;
 
   window['LCDElement'] = [
     { ID: 'TicketNumber', Caption: 'Ticket EN' },
@@ -35,14 +36,15 @@ describe('LcdInfoService', () => {
 
   mockCacheManagerService = {
     intialaize() { return Result.Success; },
+    branchID: 115
   };
 
   let countersInfo = [{
     queueBranch_ID: '115', counterID: 131, displayTicketNumber: 'S019', hallID: '117', id: '1604',
-    lastCallTime: 1540981960167, segmentID: '109', serviceID: '110', activityType: 5, userID: '-1'
+    lastCallTime: '1540981960167', segmentID: '109', serviceID: '110', activityType: 5, userID: '-1'
   }, {
     queueBranch_ID: '115', counterID: 119, displayTicketNumber: 'S020', hallID: '117', id: '1604',
-    lastCallTime: 1540981960167, segmentID: '109', serviceID: '110', activityType: 5, userID: '-1'
+    lastCallTime: '1540981960167', segmentID: '109', serviceID: '110', activityType: 5, userID: '-1'
   }] as CounterInfo[];
 
   let counters = [{ id: 118, nameL1: 'C1', nameL2: 'C1', nameL3: '', nameL4: '', number: 1 },
@@ -107,7 +109,8 @@ describe('LcdInfoService', () => {
     updateConfig: new EventEmitter(),
     onDisconnect: new EventEmitter(),
     exuteCommand: new EventEmitter(),
-    statusUpdate: new EventEmitter()
+    statusUpdate: new EventEmitter(),
+    startApp: new EventEmitter()
   };
 
   mockEventsService.updateData =  new EventEmitter();
@@ -115,6 +118,7 @@ describe('LcdInfoService', () => {
   mockEventsService.onDisconnect =  new EventEmitter();
   mockEventsService.exuteCommand = new EventEmitter();
   mockEventsService.statusUpdate =  new EventEmitter();
+  mockEventsService.startApp =  new EventEmitter();
 
   mockHelperService = {
     getLCDDesign() { return Result.Success},
@@ -127,6 +131,10 @@ describe('LcdInfoService', () => {
     async setLastUpdateTime() { window['lastUpdateTime'] = new Date() },
   };
 
+  mockAuthenticationService = {
+    login: jasmine.createSpy()
+  };
+
   beforeEach(() => {
     mockLoggerservice = jasmine.createSpyObj(['error']);
     TestBed.configureTestingModule({
@@ -137,7 +145,8 @@ describe('LcdInfoService', () => {
         { provide: CacheService, useValue: mockCacheService },
         { provide: CacheManagerService, useValue: mockCacheManagerService },
         { provide: EventsService, useValue: mockEventsService },
-        { provide: HelperService, useValue:  mockHelperService}
+        { provide: HelperService, useValue:  mockHelperService},
+        { provide: AuthenticationService, useValue: mockAuthenticationService }
       ]
     });
     mockCacheService.LCDCache = cache;
@@ -146,6 +155,15 @@ describe('LcdInfoService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
+  });
+
+  describe('Authenticate', () => {
+    it('it should starts app', async () => {
+
+      let result = await service.Authenticate('test', 'test');
+
+      expect(mockAuthenticationService.login).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('start', () => {
@@ -222,7 +240,7 @@ describe('LcdInfoService', () => {
 
       let tCountersInfo = [{
         queueBranch_ID: '115', counterID: 131, displayTicketNumber: 'S019', hallID: '117', id: '1604',
-        lastCallTime: 1540981960167, segmentID: '109', serviceID: '110', activityType: 3, userID: '-1'
+        lastCallTime: '1540981960167', segmentID: '109', serviceID: '110', activityType: 3, userID: '-1'
       }] as CounterInfo[];
 
       let updatedCounters = await service.updateCounters(tCountersInfo, countersInfo);
@@ -233,19 +251,18 @@ describe('LcdInfoService', () => {
 
   describe('prepareCounterData', () => {
     it('should update prepare Counter Data', async () => {
-
       let countersInfoPayloud = [
         {
           currentState: {
             branch_ID: '115',
-            type: 3
+            activityType: 3
           },
           id: '118'
         },
         {
           currentState: {
             branch_ID: '115',
-            type: 5
+            activityType: 5
           },
           currentTransaction: {
             branch_ID: '115',

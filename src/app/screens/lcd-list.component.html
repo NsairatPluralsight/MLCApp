@@ -1,4 +1,4 @@
-<div appNgInclude src="../MainLCD/theme/themeOptions.css" type="style"></div>
+<div appNgInclude src="../MainLCD/assets/theme/themeOptions.css" type="style"></div>
 <div class="row">
   <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
     <div class="table-responsive-lg">
@@ -15,7 +15,7 @@
               scope="col">
               {{ (item.ID === 'HallColor' || item.ID ===  'CounterDirection') ? null : info[item.ID]}}
 
-              <img *ngIf="item.ID === 'CounterDirection'" src="../MainLCD/theme/Images/{{info[item.ID]}}.png">
+              <img *ngIf="item.ID === 'CounterDirection'" src="../MainLCD/assets/Images/{{info[item.ID]}}.png">
 
             </td>
           </tr>
@@ -29,4 +29,7 @@
   <div class="command">
     {{commandText}}
   </div>
+</div>
+<div *ngIf="showErrorIcon">
+  <img src="../MainLCD/assets/Images/error.png">
 </div>

@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { LoggerService } from './logger.service';
 import { LCDCache } from '../models/cache';
+import { AuthUser } from '../models/user';
 
 @Injectable()
 export class CacheService {
   private cache: LCDCache;
+  private user: AuthUser;
 
   /**
   * @constructor
@@ -30,6 +32,28 @@ export class CacheService {
   getCache(): LCDCache {
     try {
       return this.cache;
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  /**
+   * @param {AuthUser} user - the authenticated user used to start this mainLCD
+   */
+  setUser(user: AuthUser): void {
+    try {
+      this.user = user;
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  /**
+   * @returns {AuthUser} - the authenticated user
+   */
+  getUser(): AuthUser {
+    try {
+      return this.user;
     } catch (error) {
       this.logger.error(error);
     }

@@ -5,8 +5,6 @@ import { StateService } from '../shared/services/state.service';
 import { CacheService } from '../shared/services/cache.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Result } from '../shared/models/enums';
-import { By } from '@angular/platform-browser';
-import { Observable } from 'rxjs';
 
 describe('LoadingComponent', () => {
   let component: LoadingComponent;

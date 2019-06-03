@@ -1,5 +1,6 @@
 // Karma configuration file, see link for more information
 // https://karma-runner.github.io/1.0/config/configuration-file.html
+
 module.exports = function (config) {
   config.set({
     basePath: '',
@@ -10,6 +11,7 @@ module.exports = function (config) {
       require('karma-jasmine-html-reporter'),
       require('karma-coverage-istanbul-reporter'),
       require('@angular-devkit/build-angular/plugins/karma'),
+      require('karma-junit-reporter'),
     ],
     client: {
       clearContext: false // leave Jasmine Spec Runner output visible in browser
@@ -19,23 +21,16 @@ module.exports = function (config) {
       reports: ['html', 'lcovonly'],
       fixWebpackSourcePaths: true
     },
-    reporters: ['progress', 'kjhtml'],
-    port: 9876,
+    reporters: ['progress', 'kjhtml', 'junit'],
+    port: 9875,
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ['ChromeHeadlessNoSandbox', 'Chrome'],
-    customLaunchers: {
-      ChromeHeadlessNoSandbox: {
-        base: 'ChromeHeadless',
-        flags: [
-          // See https://chromium.googlesource.com/chromium/src/+/lkgr/headless/README.md
-          '--headless',
-          '--no-sandbox',
-          '--disable-dev-shm-usage'
-        ],
-      }
-    },
+    browsers: ['ChromeHeadless', 'Chrome'],
     singleRun: true,
+    junitReporter: {
+      outputDir: '../junitResults',
+      suite: 'models'
+  }
   });
 };

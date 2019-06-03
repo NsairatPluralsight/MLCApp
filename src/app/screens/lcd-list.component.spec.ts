@@ -1,10 +1,9 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LCDListComponent } from './lcd-list.component';
 import { NO_ERRORS_SCHEMA, EventEmitter } from '@angular/core';
 import { LoggerService } from '../shared/services/logger.service';
 import { StateService } from '../shared/services/state.service';
-import { CacheService } from '../shared/services/cache.service';
 import { LCDInfoService } from './lcd-info.service';
 import { LCDStatus } from '../shared/models/enums';
 import { EventsService } from '../shared/services/events.service';
@@ -28,7 +27,8 @@ describe('LcdListComponent', () => {
     updateConfig: new EventEmitter(),
     onDisconnect: new EventEmitter(),
     exuteCommand: new EventEmitter(),
-    statusUpdate: new EventEmitter()
+    statusUpdate: new EventEmitter(),
+    unAuthenticated: new EventEmitter()
   };
 
   mockEventsService.updateData =  new EventEmitter();
@@ -36,6 +36,7 @@ describe('LcdListComponent', () => {
   mockEventsService.onDisconnect =  new EventEmitter();
   mockEventsService.exuteCommand = new EventEmitter();
   mockEventsService.statusUpdate =  new EventEmitter();
+  mockEventsService.unAuthenticated =  new EventEmitter();
 
   mockHelperService = {
     getCommandText() { return 'test'}

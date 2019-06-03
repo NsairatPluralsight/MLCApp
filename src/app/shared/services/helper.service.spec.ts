@@ -78,9 +78,12 @@ describe('HelperService', () => {
 
   describe('getCommandText', () => {
     it('should return text', () => {
+      let obj = {
+        command: 'HELLO'
+      };
       let message = new Message();
       message.payload = new ResponsePayload();
-      message.payload.data = 'HELLO';
+      message.payload.data =  JSON.stringify(obj);
       let text = service.getCommandText(message);
 
       expect(text).toEqual('HELLO');

@@ -7,6 +7,9 @@ export class EventsService {
   onDisconnect: EventEmitter<any> = new EventEmitter();
   exuteCommand: EventEmitter<any> = new EventEmitter();
   statusUpdate: EventEmitter<any> = new EventEmitter();
+  unAuthorized: EventEmitter<any> = new EventEmitter();
+  startApp: EventEmitter<any> = new EventEmitter();
+  unAuthenticated: EventEmitter<any> = new EventEmitter();
 
   constructor() { }
 }
